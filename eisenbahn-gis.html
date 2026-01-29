@@ -1,0 +1,2472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eisenbahn Infrastruktur GIS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* ========================================
+           CSS - Layout und Styling
+           ======================================== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --header-height: 50px;
+            --sidebar-width: 320px;
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-light: #ecf0f1;
+            --text-color: #2c3e50;
+            --border-color: #bdc3c7;
+            --region-nord: #3498db;
+            --region-sued: #e74c3c;
+            --region-west: #2ecc71;
+            --region-ost: #9b59b6;
+            --region-suedwest: #f39c12;
+            --region-suedost: #1abc9c;
+            --region-mitte: #e67e22;
+            --region-default: #7f8c8d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            height: var(--header-height);
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .header-stats {
+            margin-left: auto;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            height: calc(100vh - var(--header-height));
+            margin-top: var(--header-height);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: var(--background-light);
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .sidebar-section-header:hover {
+            background: #dfe6e9;
+        }
+
+        .sidebar-section-header .toggle-icon {
+            transition: transform 0.2s;
+        }
+
+        .sidebar-section.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .sidebar-section.collapsed .sidebar-section-content {
+            display: none;
+        }
+
+        .sidebar-section-content {
+            padding: 15px;
+        }
+
+        /* File Upload */
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--secondary-color);
+            background: #f8f9fa;
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--secondary-color);
+            background: #e8f4fc;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-upload-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .file-upload-btn:hover {
+            background: #2980b9;
+        }
+
+        .file-list {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .file-item.loaded {
+            background: #d4edda;
+        }
+
+        .file-item .status {
+            font-size: 11px;
+            color: #666;
+        }
+
+        /* Statistics */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .stat-item {
+            background: var(--background-light);
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* Layer Controls */
+        .layer-control {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .layer-control:last-child {
+            border-bottom: none;
+        }
+
+        .layer-control input[type="checkbox"] {
+            margin-right: 10px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .layer-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+
+        .layer-label {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .layer-count {
+            font-size: 11px;
+            color: #666;
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* Legend */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 4px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .legend-color.point {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* Filter Controls */
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .filter-checkboxes {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .filter-checkbox input {
+            margin-right: 8px;
+        }
+
+        .filter-checkbox label {
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .filter-checkbox.disabled label {
+            color: #aaa;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .btn-small:hover {
+            background: var(--background-light);
+        }
+
+        /* Search Controls */
+        .search-mode {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .search-mode-btn {
+            flex: 1;
+            padding: 8px;
+            font-size: 11px;
+            border: 1px solid var(--border-color);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .search-mode-btn.active {
+            background: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        .search-input-group {
+            margin-bottom: 10px;
+        }
+
+        .search-input-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+        }
+
+        .search-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-row .search-input-group {
+            flex: 1;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .search-btn:hover {
+            background: #2980b9;
+        }
+
+        .search-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Saved Markings */
+        .markings-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .marking-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+
+        .marking-info {
+            flex: 1;
+        }
+
+        .marking-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .marking-btn {
+            padding: 3px 8px;
+            font-size: 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .marking-btn.view {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .marking-btn.delete {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-save-marking {
+            width: 100%;
+            padding: 8px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .btn-save-marking:hover {
+            background: #219a52;
+        }
+
+        .btn-save-marking:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            padding: 12px 20px;
+            background: #27ae60;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.error {
+            background: var(--accent-color);
+        }
+
+        .notification.warning {
+            background: #f39c12;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--background-light);
+            border-top-color: var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                top: var(--header-height);
+                left: 0;
+                bottom: 0;
+                z-index: 999;
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .map-container {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>Eisenbahn Infrastruktur GIS</h1>
+        <div class="header-stats" id="headerStats">
+            Keine Daten geladen
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <!-- Dateien hochladen -->
+            <div class="sidebar-section" id="sectionUpload">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionUpload')">
+                    <span>Dateien hochladen</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="file-upload-area" id="dropZone">
+                        <label class="file-upload-btn" for="fileInput">
+                            CSV-Dateien auswählen
+                        </label>
+                        <input type="file" id="fileInput" class="file-input" multiple accept=".csv">
+                        <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                            oder Dateien hierher ziehen
+                        </p>
+                    </div>
+                    <div class="file-list" id="fileList">
+                        <div class="file-item">
+                            <span>Dim_Strecken.CSV</span>
+                            <span class="status" id="statusStrecken">ausstehend</span>
+                        </div>
+                        <div class="file-item">
+                            <span>Dim_Betriebsstellen.CSV</span>
+                            <span class="status" id="statusBetriebsstellen">ausstehend</span>
+                        </div>
+                        <div class="file-item">
+                            <span>Dim_Streckenverortung.CSV</span>
+                            <span class="status" id="statusVerortung">ausstehend</span>
+                        </div>
+                        <div class="file-item">
+                            <span>DB_Netz_Bereiche.CSV</span>
+                            <span class="status" id="statusNetzBereiche">ausstehend</span>
+                        </div>
+                        <div class="file-item">
+                            <span>Dim_Bereich.CSV</span>
+                            <span class="status" id="statusBereich">ausstehend</span>
+                        </div>
+                        <div class="file-item">
+                            <span>bruecken.csv</span>
+                            <span class="status" id="statusBruecken">ausstehend</span>
+                        </div>
+                        <div class="file-item">
+                            <span>bahnuebergaenge.csv</span>
+                            <span class="status" id="statusBahnuebergaenge">ausstehend</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiken -->
+            <div class="sidebar-section" id="sectionStats">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionStats')">
+                    <span>Statistiken</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="statStrecken">0</div>
+                            <div class="stat-label">Strecken</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statBetriebsstellen">0</div>
+                            <div class="stat-label">Betriebsstellen</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statBruecken">0</div>
+                            <div class="stat-label">Brücken</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="statBahnuebergaenge">0</div>
+                            <div class="stat-label">Bahnübergänge</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ebenen -->
+            <div class="sidebar-section" id="sectionLayers">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionLayers')">
+                    <span>Ebenen</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="layer-control">
+                        <input type="checkbox" id="layerStrecken" checked onchange="toggleLayer('strecken')">
+                        <div class="layer-color" style="background: var(--secondary-color);"></div>
+                        <span class="layer-label">Strecken</span>
+                        <span class="layer-count" id="layerCountStrecken">0</span>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="layerBetriebsstellen" checked onchange="toggleLayer('betriebsstellen')">
+                        <div class="layer-color point" style="background: #e74c3c;"></div>
+                        <span class="layer-label">Betriebsstellen</span>
+                        <span class="layer-count" id="layerCountBetriebsstellen">0</span>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="layerBruecken" checked onchange="toggleLayer('bruecken')">
+                        <div class="layer-color point" style="background: #f39c12;"></div>
+                        <span class="layer-label">Brücken</span>
+                        <span class="layer-count" id="layerCountBruecken">0</span>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="layerBahnuebergaenge" checked onchange="toggleLayer('bahnuebergaenge')">
+                        <div class="layer-color point" style="background: #c0392b;"></div>
+                        <span class="layer-label">Bahnübergänge</span>
+                        <span class="layer-count" id="layerCountBahnuebergaenge">0</span>
+                    </div>
+                    <div class="layer-control">
+                        <input type="checkbox" id="layerMarkierungen" checked onchange="toggleLayer('markierungen')">
+                        <div class="layer-color" style="background: #9b59b6;"></div>
+                        <span class="layer-label">Markierungen</span>
+                        <span class="layer-count" id="layerCountMarkierungen">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legende -->
+            <div class="sidebar-section collapsed" id="sectionLegend">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionLegend')">
+                    <span>Legende</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <p style="font-size: 12px; font-weight: 600; margin-bottom: 8px;">Regionen (Streckenfarben)</p>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--region-nord);"></div>
+                        <span>Nord</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--region-sued);"></div>
+                        <span>Süd</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--region-west);"></div>
+                        <span>West</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--region-ost);"></div>
+                        <span>Ost</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--region-suedwest);"></div>
+                        <span>Südwest</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--region-suedost);"></div>
+                        <span>Südost</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: var(--region-mitte);"></div>
+                        <span>Mitte</span>
+                    </div>
+                    <p style="font-size: 12px; font-weight: 600; margin: 12px 0 8px 0;">Punkttypen</p>
+                    <div class="legend-item">
+                        <div class="legend-color point" style="background: #e74c3c;"></div>
+                        <span>Betriebsstellen</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color point" style="background: #f39c12;"></div>
+                        <span>Brücken</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color point" style="background: #c0392b;"></div>
+                        <span>Bahnübergänge</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <div class="sidebar-section" id="sectionFilter">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionFilter')">
+                    <span>Filter</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <!-- Region Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Region</label>
+                        <div class="filter-checkboxes" id="filterRegion">
+                            <div class="empty-state">Keine Daten</div>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn-small" onclick="selectAllFilter('region')">Alle</button>
+                            <button class="btn-small" onclick="deselectAllFilter('region')">Keine</button>
+                        </div>
+                    </div>
+
+                    <!-- Netz Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Netz</label>
+                        <div class="filter-checkboxes" id="filterNetz">
+                            <div class="empty-state">Keine Daten</div>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn-small" onclick="selectAllFilter('netz')">Alle</button>
+                            <button class="btn-small" onclick="deselectAllFilter('netz')">Keine</button>
+                        </div>
+                    </div>
+
+                    <!-- Netzbezirk Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">Netzbezirk</label>
+                        <div class="filter-checkboxes" id="filterNetzbezirk">
+                            <div class="empty-state">Keine Daten</div>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn-small" onclick="selectAllFilter('netzbezirk')">Alle</button>
+                            <button class="btn-small" onclick="deselectAllFilter('netzbezirk')">Keine</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streckensuche -->
+            <div class="sidebar-section" id="sectionSearch">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionSearch')">
+                    <span>Streckensuche</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="search-mode">
+                        <button class="search-mode-btn active" data-mode="strecke" onclick="setSearchMode('strecke')">
+                            Strecke
+                        </button>
+                        <button class="search-mode-btn" data-mode="punkt" onclick="setSearchMode('punkt')">
+                            Punkt (km)
+                        </button>
+                        <button class="search-mode-btn" data-mode="abschnitt" onclick="setSearchMode('abschnitt')">
+                            Abschnitt
+                        </button>
+                    </div>
+
+                    <div class="search-input-group">
+                        <label for="searchStrecke">Streckennummer</label>
+                        <input type="text" id="searchStrecke" class="search-input" placeholder="z.B. 1700">
+                    </div>
+
+                    <div id="searchKmFields" style="display: none;">
+                        <div class="search-row">
+                            <div class="search-input-group">
+                                <label for="searchKmVon">km von</label>
+                                <input type="text" id="searchKmVon" class="search-input" placeholder="z.B. 10.5">
+                            </div>
+                            <div class="search-input-group" id="searchKmBisGroup" style="display: none;">
+                                <label for="searchKmBis">km bis</label>
+                                <input type="text" id="searchKmBis" class="search-input" placeholder="z.B. 25.3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="search-btn" id="searchBtn" onclick="executeSearch()">
+                        Suchen
+                    </button>
+
+                    <button class="btn-save-marking" id="saveMarkingBtn" onclick="saveCurrentMarking()" disabled>
+                        Markierung speichern
+                    </button>
+                </div>
+            </div>
+
+            <!-- Gespeicherte Markierungen -->
+            <div class="sidebar-section collapsed" id="sectionMarkings">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionMarkings')">
+                    <span>Gespeicherte Markierungen</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="markings-list" id="markingsList">
+                        <div class="empty-state">Keine Markierungen</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Map Container -->
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText">Lade Daten...</div>
+        </div>
+    </div>
+
+    <script>
+        /* ========================================
+           JavaScript - Anwendungslogik
+           ======================================== */
+
+        // ========================================
+        // Konstanten und Konfiguration
+        // ========================================
+
+        const CONFIG = {
+            STORAGE_KEY_DATA: 'eisenbahn_gis_data',
+            STORAGE_KEY_MARKINGS: 'eisenbahn_gis_markings',
+            STORAGE_KEY_FILTERS: 'eisenbahn_gis_filters',
+            MAP_CENTER: [51.1657, 10.4515], // Deutschland Zentrum
+            MAP_ZOOM: 6,
+            REGION_COLORS: {
+                'Nord': '#3498db',
+                'Süd': '#e74c3c',
+                'West': '#2ecc71',
+                'Ost': '#9b59b6',
+                'Südwest': '#f39c12',
+                'Südost': '#1abc9c',
+                'Mitte': '#e67e22',
+                'default': '#7f8c8d'
+            },
+            POINT_COLORS: {
+                'betriebsstelle': '#e74c3c',
+                'bruecke': '#f39c12',
+                'bahnuebergang': '#c0392b'
+            }
+        };
+
+        // Region Normalisierung Mapping
+        const REGION_NORMALIZATION = {
+            'nord': 'Nord',
+            'süd': 'Süd',
+            'sued': 'Süd',
+            'west': 'West',
+            'ost': 'Ost',
+            'südwest': 'Südwest',
+            'suedwest': 'Südwest',
+            'südost': 'Südost',
+            'suedost': 'Südost',
+            'mitte': 'Mitte'
+        };
+
+        // Spalten-Aliase für robuste CSV-Verarbeitung
+        const COLUMN_ALIASES = {
+            streckennummer: ['streckennummer', 'strecken_nr', 'strecke_nr', 'str_nr', 'strnr', 'strecke'],
+            region: ['region', 'reg', 'regionalbereich'],
+            netz: ['netz', 'netzbereich', 'netz_bereich'],
+            netzbezirk: ['netzbezirk', 'netz_bezirk', 'bezirk'],
+            km_von: ['km_von', 'km_von_wert', 'von_km', 'anfang_km', 'km_anfang', 'von'],
+            km_bis: ['km_bis', 'km_bis_wert', 'bis_km', 'ende_km', 'km_ende', 'bis'],
+            name: ['name', 'bezeichnung', 'bez', 'beschreibung'],
+            wkt: ['wkt', 'geometry', 'geom', 'shape', 'the_geom'],
+            lat: ['geogr_breite', 'breite', 'lat', 'latitude', 'y'],
+            lon: ['geogr_laenge', 'laenge', 'lon', 'longitude', 'lng', 'x']
+        };
+
+        // ========================================
+        // Globaler Anwendungszustand
+        // ========================================
+
+        const AppState = {
+            // Daten
+            rawData: {
+                strecken: [],
+                betriebsstellen: [],
+                verortung: [],
+                netzBereiche: [],
+                bereich: [],
+                bruecken: [],
+                bahnuebergaenge: []
+            },
+            geoJsonData: {
+                type: 'FeatureCollection',
+                features: []
+            },
+
+            // Filter
+            filters: {
+                regions: new Set(),
+                netze: new Set(),
+                netzbezirke: new Set()
+            },
+            activeFilters: {
+                regions: new Set(),
+                netze: new Set(),
+                netzbezirke: new Set()
+            },
+
+            // Hierarchie für kaskadierende Filter
+            hierarchy: {
+                regionToNetze: new Map(),
+                netzToNetzbezirke: new Map(),
+                netzbezirkToRegion: new Map()
+            },
+
+            // Suche
+            searchMode: 'strecke',
+            currentSearchResult: null,
+
+            // Markierungen
+            savedMarkings: [],
+
+            // Kartenreferenzen
+            map: null,
+            layers: {
+                strecken: null,
+                betriebsstellen: null,
+                bruecken: null,
+                bahnuebergaenge: null,
+                markierungen: null,
+                searchHighlight: null
+            },
+            layerVisibility: {
+                strecken: true,
+                betriebsstellen: true,
+                bruecken: true,
+                bahnuebergaenge: true,
+                markierungen: true
+            }
+        };
+
+        // ========================================
+        // Data Layer - CSV Parsing und Konvertierung
+        // ========================================
+
+        /**
+         * Normalisiert Region-Namen
+         */
+        function normalizeRegion(region) {
+            if (!region || typeof region !== 'string') {
+                return 'Unbekannt';
+            }
+            const normalized = region.trim().toLowerCase();
+            return REGION_NORMALIZATION[normalized] || region.trim();
+        }
+
+        /**
+         * Findet den passenden Spaltennamen aus Aliase
+         */
+        function findColumn(headers, aliases) {
+            const headersLower = headers.map(h => h.toLowerCase().trim());
+            for (const alias of aliases) {
+                const index = headersLower.indexOf(alias.toLowerCase());
+                if (index !== -1) {
+                    return headers[index];
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Parst eine CSV-Datei
+         */
+        function parseCSV(text) {
+            const lines = text.split(/\r?\n/).filter(line => line.trim());
+            if (lines.length === 0) {
+                return { headers: [], rows: [] };
+            }
+
+            const headers = parseCSVLine(lines[0]);
+            const rows = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length > 0) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index] !== undefined ? values[index] : '';
+                    });
+                    rows.push(row);
+                }
+            }
+
+            return { headers, rows };
+        }
+
+        /**
+         * Parst eine einzelne CSV-Zeile (mit ; als Trennzeichen)
+         */
+        function parseCSVLine(line) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ';' && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current.trim());
+
+            return values;
+        }
+
+        /**
+         * Parst WKT POINT Geometrie
+         */
+        function parseWKTPoint(wkt) {
+            if (!wkt) return null;
+
+            const pointMatch = wkt.match(/POINT\s*\(\s*([-\d.]+)\s+([-\d.]+)\s*\)/i);
+            if (pointMatch) {
+                const lon = parseFloat(pointMatch[1]);
+                const lat = parseFloat(pointMatch[2]);
+                if (!isNaN(lon) && !isNaN(lat)) {
+                    return [lon, lat];
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Parst WKT LINESTRING Geometrie
+         */
+        function parseWKTLineString(wkt) {
+            if (!wkt) return null;
+
+            const lineMatch = wkt.match(/LINESTRING\s*\((.*)\)/i);
+            if (lineMatch) {
+                const coordsStr = lineMatch[1];
+                const coords = coordsStr.split(',').map(pair => {
+                    const parts = pair.trim().split(/\s+/);
+                    if (parts.length >= 2) {
+                        const lon = parseFloat(parts[0]);
+                        const lat = parseFloat(parts[1]);
+                        if (!isNaN(lon) && !isNaN(lat)) {
+                            return [lon, lat];
+                        }
+                    }
+                    return null;
+                }).filter(c => c !== null);
+
+                return coords.length >= 2 ? coords : null;
+            }
+            return null;
+        }
+
+        /**
+         * Extrahiert Koordinaten aus einem Datensatz
+         */
+        function extractCoordinates(row, headers, isLineString = false) {
+            // Versuche WKT
+            const wktCol = findColumn(headers, COLUMN_ALIASES.wkt);
+            if (wktCol && row[wktCol]) {
+                if (isLineString) {
+                    return parseWKTLineString(row[wktCol]);
+                } else {
+                    return parseWKTPoint(row[wktCol]);
+                }
+            }
+
+            // Versuche Lat/Lon Spalten
+            const latCol = findColumn(headers, COLUMN_ALIASES.lat);
+            const lonCol = findColumn(headers, COLUMN_ALIASES.lon);
+
+            if (latCol && lonCol && row[latCol] && row[lonCol]) {
+                const lat = parseFloat(row[latCol].replace(',', '.'));
+                const lon = parseFloat(row[lonCol].replace(',', '.'));
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    return [lon, lat];
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Konvertiert Strecken-Daten zu GeoJSON Features
+         */
+        function convertStreckenToFeatures(data, headers) {
+            const features = [];
+            const strNrCol = findColumn(headers, COLUMN_ALIASES.streckennummer);
+            const regionCol = findColumn(headers, COLUMN_ALIASES.region);
+            const netzCol = findColumn(headers, COLUMN_ALIASES.netz);
+            const bezirkCol = findColumn(headers, COLUMN_ALIASES.netzbezirk);
+            const kmVonCol = findColumn(headers, COLUMN_ALIASES.km_von);
+            const kmBisCol = findColumn(headers, COLUMN_ALIASES.km_bis);
+            const nameCol = findColumn(headers, COLUMN_ALIASES.name);
+
+            for (const row of data) {
+                const coords = extractCoordinates(row, headers, true);
+
+                // Wenn keine LineString-Koordinaten, versuche Point zu erstellen
+                let geometry = null;
+                if (coords) {
+                    geometry = {
+                        type: 'LineString',
+                        coordinates: coords
+                    };
+                } else {
+                    const pointCoords = extractCoordinates(row, headers, false);
+                    if (pointCoords) {
+                        // Erstelle einen "Pseudo-LineString" für einen Punkt
+                        geometry = {
+                            type: 'LineString',
+                            coordinates: [pointCoords, pointCoords]
+                        };
+                    }
+                }
+
+                const region = normalizeRegion(regionCol ? row[regionCol] : '');
+                const netz = netzCol ? (row[netzCol] || '').trim() : '';
+                const netzbezirk = bezirkCol ? (row[bezirkCol] || '').trim() : '';
+
+                // Hierarchie aufbauen
+                if (region && region !== 'Unbekannt') {
+                    AppState.filters.regions.add(region);
+                    if (netz) {
+                        AppState.filters.netze.add(netz);
+                        if (!AppState.hierarchy.regionToNetze.has(region)) {
+                            AppState.hierarchy.regionToNetze.set(region, new Set());
+                        }
+                        AppState.hierarchy.regionToNetze.get(region).add(netz);
+
+                        if (netzbezirk) {
+                            AppState.filters.netzbezirke.add(netzbezirk);
+                            if (!AppState.hierarchy.netzToNetzbezirke.has(netz)) {
+                                AppState.hierarchy.netzToNetzbezirke.set(netz, new Set());
+                            }
+                            AppState.hierarchy.netzToNetzbezirke.get(netz).add(netzbezirk);
+                            AppState.hierarchy.netzbezirkToRegion.set(netzbezirk, region);
+                        }
+                    }
+                }
+
+                const feature = {
+                    type: 'Feature',
+                    geometry: geometry,
+                    properties: {
+                        type: 'strecke',
+                        streckennummer: strNrCol ? (row[strNrCol] || '').trim() : '',
+                        region: region,
+                        netz: netz,
+                        netzbezirk: netzbezirk,
+                        km_von: kmVonCol ? parseFloat((row[kmVonCol] || '0').replace(',', '.')) : 0,
+                        km_bis: kmBisCol ? parseFloat((row[kmBisCol] || '0').replace(',', '.')) : 0,
+                        name: nameCol ? (row[nameCol] || '').trim() : ''
+                    }
+                };
+
+                // Feature nur hinzufügen, wenn es eine Geometrie hat oder zumindest Metadaten
+                if (geometry || feature.properties.streckennummer) {
+                    features.push(feature);
+                }
+            }
+
+            return features;
+        }
+
+        /**
+         * Konvertiert Punkt-Daten (Betriebsstellen, Brücken, BÜ) zu GeoJSON Features
+         */
+        function convertPointsToFeatures(data, headers, featureType) {
+            const features = [];
+            const strNrCol = findColumn(headers, COLUMN_ALIASES.streckennummer);
+            const regionCol = findColumn(headers, COLUMN_ALIASES.region);
+            const netzCol = findColumn(headers, COLUMN_ALIASES.netz);
+            const bezirkCol = findColumn(headers, COLUMN_ALIASES.netzbezirk);
+            const kmVonCol = findColumn(headers, COLUMN_ALIASES.km_von);
+            const nameCol = findColumn(headers, COLUMN_ALIASES.name);
+
+            for (const row of data) {
+                const coords = extractCoordinates(row, headers, false);
+
+                let geometry = null;
+                if (coords) {
+                    geometry = {
+                        type: 'Point',
+                        coordinates: coords
+                    };
+                }
+
+                const region = normalizeRegion(regionCol ? row[regionCol] : '');
+
+                const feature = {
+                    type: 'Feature',
+                    geometry: geometry,
+                    properties: {
+                        type: featureType,
+                        streckennummer: strNrCol ? (row[strNrCol] || '').trim() : '',
+                        region: region,
+                        netz: netzCol ? (row[netzCol] || '').trim() : '',
+                        netzbezirk: bezirkCol ? (row[bezirkCol] || '').trim() : '',
+                        km_von: kmVonCol ? parseFloat((row[kmVonCol] || '0').replace(',', '.')) : 0,
+                        km_bis: kmVonCol ? parseFloat((row[kmVonCol] || '0').replace(',', '.')) : 0,
+                        name: nameCol ? (row[nameCol] || '').trim() : ''
+                    }
+                };
+
+                // Feature nur hinzufügen, wenn es eine Geometrie hat
+                if (geometry) {
+                    features.push(feature);
+                }
+            }
+
+            return features;
+        }
+
+        /**
+         * Erkennt den Dateityp anhand des Namens
+         */
+        function detectFileType(filename) {
+            const lower = filename.toLowerCase();
+
+            if (lower.includes('strecken') && !lower.includes('verortung')) {
+                return 'strecken';
+            }
+            if (lower.includes('betriebsstelle')) {
+                return 'betriebsstellen';
+            }
+            if (lower.includes('verortung')) {
+                return 'verortung';
+            }
+            if (lower.includes('netz') && lower.includes('bereich')) {
+                return 'netzBereiche';
+            }
+            if (lower.includes('bereich') && !lower.includes('netz')) {
+                return 'bereich';
+            }
+            if (lower.includes('brueck') || lower.includes('brück')) {
+                return 'bruecken';
+            }
+            if (lower.includes('bahnueberg') || lower.includes('bahnüberg')) {
+                return 'bahnuebergaenge';
+            }
+
+            return null;
+        }
+
+        /**
+         * Verarbeitet eine hochgeladene Datei
+         */
+        async function processFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = (e) => {
+                    try {
+                        const text = e.target.result;
+                        const { headers, rows } = parseCSV(text);
+                        const fileType = detectFileType(file.name);
+
+                        if (!fileType) {
+                            resolve({ success: false, message: `Unbekannter Dateityp: ${file.name}` });
+                            return;
+                        }
+
+                        AppState.rawData[fileType] = rows;
+
+                        // Status aktualisieren
+                        const statusMap = {
+                            strecken: 'statusStrecken',
+                            betriebsstellen: 'statusBetriebsstellen',
+                            verortung: 'statusVerortung',
+                            netzBereiche: 'statusNetzBereiche',
+                            bereich: 'statusBereich',
+                            bruecken: 'statusBruecken',
+                            bahnuebergaenge: 'statusBahnuebergaenge'
+                        };
+
+                        const statusEl = document.getElementById(statusMap[fileType]);
+                        if (statusEl) {
+                            statusEl.textContent = `${rows.length} Zeilen`;
+                            statusEl.parentElement.classList.add('loaded');
+                        }
+
+                        resolve({
+                            success: true,
+                            fileType,
+                            headers,
+                            rowCount: rows.length
+                        });
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+
+                reader.onerror = () => reject(new Error(`Fehler beim Lesen von ${file.name}`));
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        /**
+         * Baut die GeoJSON FeatureCollection aus allen geladenen Daten
+         */
+        function buildGeoJSON() {
+            AppState.geoJsonData.features = [];
+
+            // Filter und Hierarchie zurücksetzen
+            AppState.filters.regions.clear();
+            AppState.filters.netze.clear();
+            AppState.filters.netzbezirke.clear();
+            AppState.hierarchy.regionToNetze.clear();
+            AppState.hierarchy.netzToNetzbezirke.clear();
+            AppState.hierarchy.netzbezirkToRegion.clear();
+
+            // Strecken verarbeiten
+            if (AppState.rawData.strecken.length > 0) {
+                const { headers } = parseCSV(reconstructCSV(AppState.rawData.strecken));
+                const features = convertStreckenToFeatures(
+                    AppState.rawData.strecken,
+                    Object.keys(AppState.rawData.strecken[0] || {})
+                );
+                AppState.geoJsonData.features.push(...features);
+            }
+
+            // Verortung als zusätzliche Strecken-Geometrien
+            if (AppState.rawData.verortung.length > 0) {
+                const features = convertStreckenToFeatures(
+                    AppState.rawData.verortung,
+                    Object.keys(AppState.rawData.verortung[0] || {})
+                );
+                AppState.geoJsonData.features.push(...features);
+            }
+
+            // Betriebsstellen
+            if (AppState.rawData.betriebsstellen.length > 0) {
+                const features = convertPointsToFeatures(
+                    AppState.rawData.betriebsstellen,
+                    Object.keys(AppState.rawData.betriebsstellen[0] || {}),
+                    'betriebsstelle'
+                );
+                AppState.geoJsonData.features.push(...features);
+            }
+
+            // Brücken
+            if (AppState.rawData.bruecken.length > 0) {
+                const features = convertPointsToFeatures(
+                    AppState.rawData.bruecken,
+                    Object.keys(AppState.rawData.bruecken[0] || {}),
+                    'bruecke'
+                );
+                AppState.geoJsonData.features.push(...features);
+            }
+
+            // Bahnübergänge
+            if (AppState.rawData.bahnuebergaenge.length > 0) {
+                const features = convertPointsToFeatures(
+                    AppState.rawData.bahnuebergaenge,
+                    Object.keys(AppState.rawData.bahnuebergaenge[0] || {}),
+                    'bahnuebergang'
+                );
+                AppState.geoJsonData.features.push(...features);
+            }
+
+            // Alle Filter initial aktivieren
+            AppState.activeFilters.regions = new Set(AppState.filters.regions);
+            AppState.activeFilters.netze = new Set(AppState.filters.netze);
+            AppState.activeFilters.netzbezirke = new Set(AppState.filters.netzbezirke);
+        }
+
+        /**
+         * Hilfsfunktion zum Rekonstruieren einer CSV (für Header-Extraktion)
+         */
+        function reconstructCSV(rows) {
+            if (rows.length === 0) return '';
+            const headers = Object.keys(rows[0]);
+            return headers.join(';');
+        }
+
+        // ========================================
+        // UI Layer - Benutzeroberfläche
+        // ========================================
+
+        /**
+         * Toggelt eine Sidebar-Sektion
+         */
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.classList.toggle('collapsed');
+            }
+        }
+
+        /**
+         * Zeigt eine Benachrichtigung an
+         */
+        function showNotification(message, type = 'success') {
+            const existing = document.querySelector('.notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        /**
+         * Zeigt/verbirgt den Ladeindikator
+         */
+        function showLoading(show, text = 'Lade Daten...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const textEl = document.getElementById('loadingText');
+
+            if (show) {
+                textEl.textContent = text;
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Aktualisiert die Statistik-Anzeige
+         */
+        function updateStatistics() {
+            const features = AppState.geoJsonData.features;
+
+            const counts = {
+                strecken: 0,
+                betriebsstellen: 0,
+                bruecken: 0,
+                bahnuebergaenge: 0
+            };
+
+            const uniqueStrecken = new Set();
+
+            for (const feature of features) {
+                const type = feature.properties.type;
+                if (type === 'strecke') {
+                    if (feature.properties.streckennummer) {
+                        uniqueStrecken.add(feature.properties.streckennummer);
+                    }
+                } else if (type === 'betriebsstelle') {
+                    counts.betriebsstellen++;
+                } else if (type === 'bruecke') {
+                    counts.bruecken++;
+                } else if (type === 'bahnuebergang') {
+                    counts.bahnuebergaenge++;
+                }
+            }
+
+            counts.strecken = uniqueStrecken.size;
+
+            document.getElementById('statStrecken').textContent = counts.strecken;
+            document.getElementById('statBetriebsstellen').textContent = counts.betriebsstellen;
+            document.getElementById('statBruecken').textContent = counts.bruecken;
+            document.getElementById('statBahnuebergaenge').textContent = counts.bahnuebergaenge;
+
+            // Header aktualisieren
+            const total = counts.strecken + counts.betriebsstellen + counts.bruecken + counts.bahnuebergaenge;
+            document.getElementById('headerStats').textContent =
+                `${counts.strecken} Strecken | ${counts.betriebsstellen} Bst | ${counts.bruecken} Brücken | ${counts.bahnuebergaenge} BÜ`;
+        }
+
+        /**
+         * Baut die Filter-Checkboxen auf
+         */
+        function buildFilterUI() {
+            buildFilterCheckboxes('filterRegion', 'region', AppState.filters.regions, AppState.activeFilters.regions);
+            buildFilterCheckboxes('filterNetz', 'netz', AppState.filters.netze, AppState.activeFilters.netze);
+            buildFilterCheckboxes('filterNetzbezirk', 'netzbezirk', AppState.filters.netzbezirke, AppState.activeFilters.netzbezirke);
+        }
+
+        /**
+         * Erstellt Checkboxen für einen Filter-Typ
+         */
+        function buildFilterCheckboxes(containerId, filterType, allValues, activeValues) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (allValues.size === 0) {
+                container.innerHTML = '<div class="empty-state">Keine Daten</div>';
+                return;
+            }
+
+            const sortedValues = Array.from(allValues).sort();
+
+            for (const value of sortedValues) {
+                const isActive = activeValues.has(value);
+                const isDisabled = !isFilterValueAvailable(filterType, value);
+
+                const div = document.createElement('div');
+                div.className = `filter-checkbox ${isDisabled ? 'disabled' : ''}`;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `filter_${filterType}_${value.replace(/\s/g, '_')}`;
+                checkbox.checked = isActive && !isDisabled;
+                checkbox.disabled = isDisabled;
+                checkbox.dataset.filterType = filterType;
+                checkbox.dataset.value = value;
+                checkbox.addEventListener('change', handleFilterChange);
+
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = value;
+
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                container.appendChild(div);
+            }
+        }
+
+        /**
+         * Prüft, ob ein Filter-Wert basierend auf der Kaskade verfügbar ist
+         */
+        function isFilterValueAvailable(filterType, value) {
+            if (filterType === 'region') {
+                return true; // Regionen sind immer verfügbar
+            }
+
+            if (filterType === 'netz') {
+                // Netz ist verfügbar, wenn mindestens eine zugehörige Region aktiv ist
+                for (const [region, netze] of AppState.hierarchy.regionToNetze) {
+                    if (AppState.activeFilters.regions.has(region) && netze.has(value)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            if (filterType === 'netzbezirk') {
+                // Netzbezirk ist verfügbar, wenn das zugehörige Netz aktiv ist
+                for (const [netz, bezirke] of AppState.hierarchy.netzToNetzbezirke) {
+                    if (AppState.activeFilters.netze.has(netz) && bezirke.has(value)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Behandelt Änderungen an Filter-Checkboxen
+         */
+        function handleFilterChange(event) {
+            const checkbox = event.target;
+            const filterType = checkbox.dataset.filterType;
+            const value = checkbox.dataset.value;
+
+            if (checkbox.checked) {
+                AppState.activeFilters[filterType + 's'].add(value);
+            } else {
+                AppState.activeFilters[filterType + 's'].delete(value);
+            }
+
+            // Kaskadierende Deaktivierung
+            if (filterType === 'region') {
+                updateCascadingFilters();
+            } else if (filterType === 'netz') {
+                updateNetzbezirkFilters();
+            }
+
+            // Filter-UI aktualisieren
+            buildFilterUI();
+
+            // Karte aktualisieren
+            updateMapLayers();
+        }
+
+        /**
+         * Aktualisiert kaskadierende Filter nach Region-Änderung
+         */
+        function updateCascadingFilters() {
+            // Deaktiviere Netze, deren Region nicht mehr aktiv ist
+            for (const netz of AppState.activeFilters.netze) {
+                let hasActiveRegion = false;
+                for (const [region, netze] of AppState.hierarchy.regionToNetze) {
+                    if (AppState.activeFilters.regions.has(region) && netze.has(netz)) {
+                        hasActiveRegion = true;
+                        break;
+                    }
+                }
+                if (!hasActiveRegion) {
+                    AppState.activeFilters.netze.delete(netz);
+                }
+            }
+
+            // Netzbezirke aktualisieren
+            updateNetzbezirkFilters();
+        }
+
+        /**
+         * Aktualisiert Netzbezirk-Filter nach Netz-Änderung
+         */
+        function updateNetzbezirkFilters() {
+            for (const bezirk of AppState.activeFilters.netzbezirke) {
+                let hasActiveNetz = false;
+                for (const [netz, bezirke] of AppState.hierarchy.netzToNetzbezirke) {
+                    if (AppState.activeFilters.netze.has(netz) && bezirke.has(bezirk)) {
+                        hasActiveNetz = true;
+                        break;
+                    }
+                }
+                if (!hasActiveNetz) {
+                    AppState.activeFilters.netzbezirke.delete(bezirk);
+                }
+            }
+        }
+
+        /**
+         * Wählt alle Filter eines Typs aus
+         */
+        function selectAllFilter(filterType) {
+            const available = [];
+
+            AppState.filters[filterType + 's'].forEach(value => {
+                if (isFilterValueAvailable(filterType, value)) {
+                    available.push(value);
+                }
+            });
+
+            available.forEach(value => {
+                AppState.activeFilters[filterType + 's'].add(value);
+            });
+
+            buildFilterUI();
+            updateMapLayers();
+        }
+
+        /**
+         * Wählt alle Filter eines Typs ab
+         */
+        function deselectAllFilter(filterType) {
+            AppState.activeFilters[filterType + 's'].clear();
+
+            if (filterType === 'region') {
+                updateCascadingFilters();
+            } else if (filterType === 'netz') {
+                updateNetzbezirkFilters();
+            }
+
+            buildFilterUI();
+            updateMapLayers();
+        }
+
+        /**
+         * Setzt den Suchmodus
+         */
+        function setSearchMode(mode) {
+            AppState.searchMode = mode;
+
+            // Button-Status aktualisieren
+            document.querySelectorAll('.search-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
+            // Eingabefelder anpassen
+            const kmFields = document.getElementById('searchKmFields');
+            const kmBisGroup = document.getElementById('searchKmBisGroup');
+
+            if (mode === 'strecke') {
+                kmFields.style.display = 'none';
+            } else if (mode === 'punkt') {
+                kmFields.style.display = 'block';
+                kmBisGroup.style.display = 'none';
+            } else if (mode === 'abschnitt') {
+                kmFields.style.display = 'block';
+                kmBisGroup.style.display = 'block';
+            }
+        }
+
+        /**
+         * Führt die Streckensuche aus
+         */
+        function executeSearch() {
+            const streckennummer = document.getElementById('searchStrecke').value.trim();
+
+            if (!streckennummer) {
+                showNotification('Bitte Streckennummer eingeben', 'warning');
+                return;
+            }
+
+            // Vorherige Suche entfernen
+            clearSearchHighlight();
+
+            const features = AppState.geoJsonData.features.filter(f =>
+                f.properties.type === 'strecke' &&
+                f.properties.streckennummer === streckennummer
+            );
+
+            if (features.length === 0) {
+                showNotification(`Strecke ${streckennummer} nicht gefunden`, 'error');
+                return;
+            }
+
+            let resultFeatures = [];
+            let searchDescription = '';
+
+            if (AppState.searchMode === 'strecke') {
+                // Gesamte Strecke
+                resultFeatures = features.filter(f => f.geometry);
+                searchDescription = `Strecke ${streckennummer}`;
+
+            } else if (AppState.searchMode === 'punkt') {
+                // Einzelner km-Punkt
+                const kmValue = parseFloat(document.getElementById('searchKmVon').value.replace(',', '.'));
+
+                if (isNaN(kmValue)) {
+                    showNotification('Bitte km-Wert eingeben', 'warning');
+                    return;
+                }
+
+                // Finde Features, die den km-Wert enthalten
+                resultFeatures = features.filter(f => {
+                    if (!f.geometry) return false;
+                    const kmVon = f.properties.km_von || 0;
+                    const kmBis = f.properties.km_bis || kmVon;
+                    return kmValue >= kmVon && kmValue <= kmBis;
+                });
+
+                // Erstelle Punkt-Marker
+                if (resultFeatures.length > 0) {
+                    const pointFeature = createPointOnStrecke(resultFeatures[0], kmValue);
+                    if (pointFeature) {
+                        resultFeatures = [pointFeature];
+                    }
+                }
+
+                searchDescription = `Strecke ${streckennummer} bei km ${kmValue}`;
+
+            } else if (AppState.searchMode === 'abschnitt') {
+                // km-Abschnitt
+                const kmVon = parseFloat(document.getElementById('searchKmVon').value.replace(',', '.'));
+                const kmBis = parseFloat(document.getElementById('searchKmBis').value.replace(',', '.'));
+
+                if (isNaN(kmVon) || isNaN(kmBis)) {
+                    showNotification('Bitte km-Bereich eingeben', 'warning');
+                    return;
+                }
+
+                // Finde überlappende Features
+                resultFeatures = features.filter(f => {
+                    if (!f.geometry) return false;
+                    const fKmVon = f.properties.km_von || 0;
+                    const fKmBis = f.properties.km_bis || fKmVon;
+                    return !(kmBis < fKmVon || kmVon > fKmBis);
+                });
+
+                searchDescription = `Strecke ${streckennummer} km ${kmVon} - ${kmBis}`;
+            }
+
+            if (resultFeatures.length === 0) {
+                showNotification('Keine passenden Abschnitte gefunden', 'warning');
+                return;
+            }
+
+            // Suchergebnis speichern
+            AppState.currentSearchResult = {
+                streckennummer,
+                mode: AppState.searchMode,
+                kmVon: parseFloat(document.getElementById('searchKmVon').value.replace(',', '.')) || null,
+                kmBis: parseFloat(document.getElementById('searchKmBis').value.replace(',', '.')) || null,
+                features: resultFeatures,
+                description: searchDescription
+            };
+
+            // Auf Karte anzeigen
+            highlightSearchResult(resultFeatures);
+
+            // Speichern-Button aktivieren
+            document.getElementById('saveMarkingBtn').disabled = false;
+
+            showNotification(`${resultFeatures.length} Abschnitt(e) gefunden`);
+        }
+
+        /**
+         * Erstellt einen Punkt auf einer Strecke bei gegebenem km-Wert
+         */
+        function createPointOnStrecke(streckenFeature, kmValue) {
+            if (!streckenFeature.geometry || streckenFeature.geometry.type !== 'LineString') {
+                return null;
+            }
+
+            const coords = streckenFeature.geometry.coordinates;
+            const kmVon = streckenFeature.properties.km_von || 0;
+            const kmBis = streckenFeature.properties.km_bis || kmVon;
+            const kmRange = kmBis - kmVon;
+
+            if (kmRange === 0) {
+                // Wenn kein Bereich, nimm den ersten Punkt
+                return {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: coords[0]
+                    },
+                    properties: { ...streckenFeature.properties }
+                };
+            }
+
+            // Interpoliere Position
+            const ratio = (kmValue - kmVon) / kmRange;
+            const index = Math.floor(ratio * (coords.length - 1));
+            const coord = coords[Math.min(index, coords.length - 1)];
+
+            return {
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: coord
+                },
+                properties: { ...streckenFeature.properties, km_punkt: kmValue }
+            };
+        }
+
+        /**
+         * Hebt Suchergebnisse auf der Karte hervor
+         */
+        function highlightSearchResult(features) {
+            if (AppState.layers.searchHighlight) {
+                AppState.map.removeLayer(AppState.layers.searchHighlight);
+            }
+
+            const geoJson = {
+                type: 'FeatureCollection',
+                features: features
+            };
+
+            AppState.layers.searchHighlight = L.geoJSON(geoJson, {
+                style: {
+                    color: '#9b59b6',
+                    weight: 6,
+                    opacity: 0.9
+                },
+                pointToLayer: (feature, latlng) => {
+                    return L.circleMarker(latlng, {
+                        radius: 12,
+                        fillColor: '#9b59b6',
+                        color: '#fff',
+                        weight: 3,
+                        fillOpacity: 0.9
+                    });
+                }
+            }).addTo(AppState.map);
+
+            // Zur Suchergebnis-Position zoomen
+            const bounds = AppState.layers.searchHighlight.getBounds();
+            if (bounds.isValid()) {
+                AppState.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+            }
+        }
+
+        /**
+         * Entfernt die Suchhervorhebung
+         */
+        function clearSearchHighlight() {
+            if (AppState.layers.searchHighlight) {
+                AppState.map.removeLayer(AppState.layers.searchHighlight);
+                AppState.layers.searchHighlight = null;
+            }
+            AppState.currentSearchResult = null;
+            document.getElementById('saveMarkingBtn').disabled = true;
+        }
+
+        /**
+         * Speichert die aktuelle Markierung
+         */
+        function saveCurrentMarking() {
+            if (!AppState.currentSearchResult) {
+                showNotification('Keine aktive Suche zum Speichern', 'warning');
+                return;
+            }
+
+            const marking = {
+                id: Date.now(),
+                ...AppState.currentSearchResult,
+                createdAt: new Date().toISOString()
+            };
+
+            AppState.savedMarkings.push(marking);
+            saveMarkingsToStorage();
+            updateMarkingsList();
+            updateMarkingsLayer();
+
+            showNotification('Markierung gespeichert');
+        }
+
+        /**
+         * Lädt eine gespeicherte Markierung
+         */
+        function loadMarking(markingId) {
+            const marking = AppState.savedMarkings.find(m => m.id === markingId);
+            if (!marking) return;
+
+            clearSearchHighlight();
+
+            AppState.currentSearchResult = marking;
+            highlightSearchResult(marking.features);
+            document.getElementById('saveMarkingBtn').disabled = true; // Bereits gespeichert
+        }
+
+        /**
+         * Löscht eine gespeicherte Markierung
+         */
+        function deleteMarking(markingId) {
+            AppState.savedMarkings = AppState.savedMarkings.filter(m => m.id !== markingId);
+            saveMarkingsToStorage();
+            updateMarkingsList();
+            updateMarkingsLayer();
+
+            showNotification('Markierung gelöscht');
+        }
+
+        /**
+         * Aktualisiert die Liste der gespeicherten Markierungen
+         */
+        function updateMarkingsList() {
+            const container = document.getElementById('markingsList');
+
+            if (AppState.savedMarkings.length === 0) {
+                container.innerHTML = '<div class="empty-state">Keine Markierungen</div>';
+                return;
+            }
+
+            container.innerHTML = AppState.savedMarkings.map(marking => `
+                <div class="marking-item">
+                    <div class="marking-info">
+                        <strong>${marking.description}</strong>
+                    </div>
+                    <div class="marking-actions">
+                        <button class="marking-btn view" onclick="loadMarking(${marking.id})">Zeigen</button>
+                        <button class="marking-btn delete" onclick="deleteMarking(${marking.id})">Löschen</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Layer-Count aktualisieren
+            document.getElementById('layerCountMarkierungen').textContent = AppState.savedMarkings.length;
+        }
+
+        // ========================================
+        // Map Layer - Leaflet Integration
+        // ========================================
+
+        /**
+         * Initialisiert die Leaflet-Karte
+         */
+        function initMap() {
+            AppState.map = L.map('map').setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
+
+            // OpenStreetMap Tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                maxZoom: 19
+            }).addTo(AppState.map);
+
+            // Layer-Gruppen erstellen
+            AppState.layers.strecken = L.layerGroup().addTo(AppState.map);
+            AppState.layers.betriebsstellen = L.layerGroup().addTo(AppState.map);
+            AppState.layers.bruecken = L.layerGroup().addTo(AppState.map);
+            AppState.layers.bahnuebergaenge = L.layerGroup().addTo(AppState.map);
+            AppState.layers.markierungen = L.layerGroup().addTo(AppState.map);
+        }
+
+        /**
+         * Gibt die Farbe für eine Region zurück
+         */
+        function getRegionColor(region) {
+            return CONFIG.REGION_COLORS[region] || CONFIG.REGION_COLORS.default;
+        }
+
+        /**
+         * Prüft, ob ein Feature den aktuellen Filtern entspricht
+         */
+        function featureMatchesFilters(feature) {
+            const props = feature.properties;
+
+            // Wenn keine Filter aktiv sind, alles anzeigen
+            if (AppState.activeFilters.regions.size === 0 &&
+                AppState.activeFilters.netze.size === 0 &&
+                AppState.activeFilters.netzbezirke.size === 0) {
+                return true;
+            }
+
+            // Region-Filter
+            if (props.region && AppState.activeFilters.regions.size > 0) {
+                if (!AppState.activeFilters.regions.has(props.region)) {
+                    return false;
+                }
+            }
+
+            // Netz-Filter
+            if (props.netz && AppState.activeFilters.netze.size > 0) {
+                if (!AppState.activeFilters.netze.has(props.netz)) {
+                    return false;
+                }
+            }
+
+            // Netzbezirk-Filter
+            if (props.netzbezirk && AppState.activeFilters.netzbezirke.size > 0) {
+                if (!AppState.activeFilters.netzbezirke.has(props.netzbezirk)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /**
+         * Aktualisiert alle Karten-Layer basierend auf Filtern
+         */
+        function updateMapLayers() {
+            // Layer leeren
+            AppState.layers.strecken.clearLayers();
+            AppState.layers.betriebsstellen.clearLayers();
+            AppState.layers.bruecken.clearLayers();
+            AppState.layers.bahnuebergaenge.clearLayers();
+
+            let counts = {
+                strecken: 0,
+                betriebsstellen: 0,
+                bruecken: 0,
+                bahnuebergaenge: 0
+            };
+
+            for (const feature of AppState.geoJsonData.features) {
+                if (!feature.geometry) continue;
+                if (!featureMatchesFilters(feature)) continue;
+
+                const props = feature.properties;
+                const type = props.type;
+
+                if (type === 'strecke' && feature.geometry.type === 'LineString') {
+                    const color = getRegionColor(props.region);
+                    const layer = L.geoJSON(feature, {
+                        style: {
+                            color: color,
+                            weight: 3,
+                            opacity: 0.8
+                        }
+                    });
+
+                    layer.bindPopup(createStreckePopup(props));
+                    AppState.layers.strecken.addLayer(layer);
+                    counts.strecken++;
+
+                } else if (type === 'betriebsstelle' && feature.geometry.type === 'Point') {
+                    const coords = feature.geometry.coordinates;
+                    const marker = L.circleMarker([coords[1], coords[0]], {
+                        radius: 6,
+                        fillColor: CONFIG.POINT_COLORS.betriebsstelle,
+                        color: '#fff',
+                        weight: 2,
+                        fillOpacity: 0.8
+                    });
+
+                    marker.bindPopup(createPointPopup(props, 'Betriebsstelle'));
+                    AppState.layers.betriebsstellen.addLayer(marker);
+                    counts.betriebsstellen++;
+
+                } else if (type === 'bruecke' && feature.geometry.type === 'Point') {
+                    const coords = feature.geometry.coordinates;
+                    const marker = L.circleMarker([coords[1], coords[0]], {
+                        radius: 5,
+                        fillColor: CONFIG.POINT_COLORS.bruecke,
+                        color: '#fff',
+                        weight: 2,
+                        fillOpacity: 0.8
+                    });
+
+                    marker.bindPopup(createPointPopup(props, 'Brücke'));
+                    AppState.layers.bruecken.addLayer(marker);
+                    counts.bruecken++;
+
+                } else if (type === 'bahnuebergang' && feature.geometry.type === 'Point') {
+                    const coords = feature.geometry.coordinates;
+                    const marker = L.circleMarker([coords[1], coords[0]], {
+                        radius: 5,
+                        fillColor: CONFIG.POINT_COLORS.bahnuebergang,
+                        color: '#fff',
+                        weight: 2,
+                        fillOpacity: 0.8
+                    });
+
+                    marker.bindPopup(createPointPopup(props, 'Bahnübergang'));
+                    AppState.layers.bahnuebergaenge.addLayer(marker);
+                    counts.bahnuebergaenge++;
+                }
+            }
+
+            // Layer-Counts aktualisieren
+            document.getElementById('layerCountStrecken').textContent = counts.strecken;
+            document.getElementById('layerCountBetriebsstellen').textContent = counts.betriebsstellen;
+            document.getElementById('layerCountBruecken').textContent = counts.bruecken;
+            document.getElementById('layerCountBahnuebergaenge').textContent = counts.bahnuebergaenge;
+        }
+
+        /**
+         * Erstellt Popup-Inhalt für Strecken
+         */
+        function createStreckePopup(props) {
+            return `
+                <div style="min-width: 150px;">
+                    <strong>Strecke ${props.streckennummer || 'k.A.'}</strong>
+                    ${props.name ? `<br><em>${props.name}</em>` : ''}
+                    <hr style="margin: 5px 0;">
+                    <small>
+                        Region: ${props.region || 'k.A.'}<br>
+                        Netz: ${props.netz || 'k.A.'}<br>
+                        Netzbezirk: ${props.netzbezirk || 'k.A.'}<br>
+                        km: ${props.km_von || 0} - ${props.km_bis || 0}
+                    </small>
+                </div>
+            `;
+        }
+
+        /**
+         * Erstellt Popup-Inhalt für Punktobjekte
+         */
+        function createPointPopup(props, typeName) {
+            return `
+                <div style="min-width: 150px;">
+                    <strong>${typeName}</strong>
+                    ${props.name ? `<br><em>${props.name}</em>` : ''}
+                    <hr style="margin: 5px 0;">
+                    <small>
+                        Strecke: ${props.streckennummer || 'k.A.'}<br>
+                        km: ${props.km_von || 'k.A.'}<br>
+                        Region: ${props.region || 'k.A.'}
+                    </small>
+                </div>
+            `;
+        }
+
+        /**
+         * Schaltet einen Layer ein/aus
+         */
+        function toggleLayer(layerName) {
+            const checkbox = document.getElementById('layer' + layerName.charAt(0).toUpperCase() + layerName.slice(1));
+            const isVisible = checkbox.checked;
+
+            AppState.layerVisibility[layerName] = isVisible;
+
+            if (layerName === 'markierungen') {
+                if (isVisible) {
+                    AppState.map.addLayer(AppState.layers.markierungen);
+                    if (AppState.layers.searchHighlight) {
+                        AppState.map.addLayer(AppState.layers.searchHighlight);
+                    }
+                } else {
+                    AppState.map.removeLayer(AppState.layers.markierungen);
+                    if (AppState.layers.searchHighlight) {
+                        AppState.map.removeLayer(AppState.layers.searchHighlight);
+                    }
+                }
+            } else if (AppState.layers[layerName]) {
+                if (isVisible) {
+                    AppState.map.addLayer(AppState.layers[layerName]);
+                } else {
+                    AppState.map.removeLayer(AppState.layers[layerName]);
+                }
+            }
+        }
+
+        /**
+         * Aktualisiert den Markierungs-Layer
+         */
+        function updateMarkingsLayer() {
+            AppState.layers.markierungen.clearLayers();
+
+            for (const marking of AppState.savedMarkings) {
+                if (!marking.features) continue;
+
+                const geoJson = {
+                    type: 'FeatureCollection',
+                    features: marking.features
+                };
+
+                const layer = L.geoJSON(geoJson, {
+                    style: {
+                        color: '#9b59b6',
+                        weight: 4,
+                        opacity: 0.7,
+                        dashArray: '5, 5'
+                    },
+                    pointToLayer: (feature, latlng) => {
+                        return L.circleMarker(latlng, {
+                            radius: 8,
+                            fillColor: '#9b59b6',
+                            color: '#fff',
+                            weight: 2,
+                            fillOpacity: 0.7
+                        });
+                    }
+                });
+
+                layer.bindPopup(`<strong>${marking.description}</strong>`);
+                AppState.layers.markierungen.addLayer(layer);
+            }
+        }
+
+        // ========================================
+        // Persistenz - localStorage
+        // ========================================
+
+        /**
+         * Speichert Markierungen in localStorage
+         */
+        function saveMarkingsToStorage() {
+            try {
+                localStorage.setItem(
+                    CONFIG.STORAGE_KEY_MARKINGS,
+                    JSON.stringify(AppState.savedMarkings)
+                );
+            } catch (e) {
+                console.error('Fehler beim Speichern der Markierungen:', e);
+                showNotification('Speichern fehlgeschlagen', 'error');
+            }
+        }
+
+        /**
+         * Lädt Markierungen aus localStorage
+         */
+        function loadMarkingsFromStorage() {
+            try {
+                const stored = localStorage.getItem(CONFIG.STORAGE_KEY_MARKINGS);
+                if (stored) {
+                    AppState.savedMarkings = JSON.parse(stored);
+                    updateMarkingsList();
+                    updateMarkingsLayer();
+                }
+            } catch (e) {
+                console.error('Fehler beim Laden der Markierungen:', e);
+            }
+        }
+
+        // ========================================
+        // Event-Handler - Datei-Upload
+        // ========================================
+
+        /**
+         * Initialisiert die File-Upload-Funktionalität
+         */
+        function initFileUpload() {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            // Drag & Drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+
+                const files = Array.from(e.dataTransfer.files).filter(f =>
+                    f.name.toLowerCase().endsWith('.csv')
+                );
+
+                if (files.length > 0) {
+                    await handleFiles(files);
+                }
+            });
+
+            // File Input
+            fileInput.addEventListener('change', async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length > 0) {
+                    await handleFiles(files);
+                }
+                fileInput.value = ''; // Reset für erneuten Upload
+            });
+        }
+
+        /**
+         * Verarbeitet hochgeladene Dateien
+         */
+        async function handleFiles(files) {
+            showLoading(true, `Verarbeite ${files.length} Datei(en)...`);
+
+            try {
+                for (const file of files) {
+                    showLoading(true, `Verarbeite ${file.name}...`);
+                    await processFile(file);
+                }
+
+                // GeoJSON aufbauen
+                showLoading(true, 'Baue Datenstruktur...');
+                buildGeoJSON();
+
+                // UI aktualisieren
+                showLoading(true, 'Aktualisiere Anzeige...');
+                updateStatistics();
+                buildFilterUI();
+                updateMapLayers();
+
+                // Zur Datenausdehnung zoomen
+                zoomToData();
+
+                showLoading(false);
+                showNotification(`${files.length} Datei(en) erfolgreich geladen`);
+
+            } catch (error) {
+                showLoading(false);
+                showNotification(`Fehler: ${error.message}`, 'error');
+                console.error('Fehler beim Verarbeiten:', error);
+            }
+        }
+
+        /**
+         * Zoomt zur Ausdehnung der geladenen Daten
+         */
+        function zoomToData() {
+            const allBounds = [];
+
+            ['strecken', 'betriebsstellen', 'bruecken', 'bahnuebergaenge'].forEach(layerName => {
+                const layer = AppState.layers[layerName];
+                if (layer && layer.getLayers().length > 0) {
+                    try {
+                        const bounds = layer.getBounds();
+                        if (bounds.isValid()) {
+                            allBounds.push(bounds);
+                        }
+                    } catch (e) {
+                        // Layer hat keine gültigen Bounds
+                    }
+                }
+            });
+
+            if (allBounds.length > 0) {
+                let combinedBounds = allBounds[0];
+                for (let i = 1; i < allBounds.length; i++) {
+                    combinedBounds.extend(allBounds[i]);
+                }
+                AppState.map.fitBounds(combinedBounds, { padding: [20, 20] });
+            }
+        }
+
+        // ========================================
+        // Initialisierung
+        // ========================================
+
+        /**
+         * Initialisiert die Anwendung
+         */
+        function init() {
+            // Karte initialisieren
+            initMap();
+
+            // File-Upload initialisieren
+            initFileUpload();
+
+            // Gespeicherte Markierungen laden
+            loadMarkingsFromStorage();
+
+            // Such-Modus setzen
+            setSearchMode('strecke');
+
+            console.log('Eisenbahn Infrastruktur GIS initialisiert');
+        }
+
+        // Anwendung starten
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
