@@ -19,10 +19,11 @@
 
         :root {
             --header-height: 50px;
-            --sidebar-width: 320px;
+            --sidebar-width: 340px;
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
             --accent-color: #e74c3c;
+            --sqf-color: #c0392b;
             --background-light: #ecf0f1;
             --text-color: #2c3e50;
             --border-color: #bdc3c7;
@@ -180,6 +181,14 @@
             background: #d4edda;
         }
 
+        .file-item.sqf {
+            background: #ffeaa7;
+        }
+
+        .file-item.sqf.loaded {
+            background: #fdcb6e;
+        }
+
         .file-item .status {
             font-size: 11px;
             color: #666;
@@ -199,10 +208,19 @@
             text-align: center;
         }
 
+        .stat-item.sqf {
+            background: #ffeaa7;
+            grid-column: span 2;
+        }
+
         .stat-value {
             font-size: 20px;
             font-weight: 600;
             color: var(--secondary-color);
+        }
+
+        .stat-item.sqf .stat-value {
+            color: var(--sqf-color);
         }
 
         .stat-label {
@@ -249,6 +267,50 @@
             border-radius: 10px;
         }
 
+        /* SQF Controls */
+        .sqf-control-section {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .sqf-control-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .sqf-control-header input {
+            margin-right: 8px;
+        }
+
+        .sqf-control-header label {
+            font-weight: 600;
+            color: var(--sqf-color);
+        }
+
+        .sqf-info {
+            font-size: 11px;
+            color: #856404;
+            margin-top: 5px;
+        }
+
+        .sqf-filter-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .sqf-filter-row select {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
         /* Legend */
         .legend-item {
             display: flex;
@@ -267,6 +329,17 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
+        }
+
+        .legend-color.sqf {
+            height: 6px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--sqf-color),
+                var(--sqf-color) 5px,
+                transparent 5px,
+                transparent 10px
+            );
         }
 
         /* Filter Controls */
@@ -470,6 +543,37 @@
             cursor: not-allowed;
         }
 
+        /* SQF Event List */
+        .sqf-events-list {
+            max-height: 250px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+
+        .sqf-event-item {
+            padding: 8px;
+            background: #fff3cd;
+            border-left: 3px solid var(--sqf-color);
+            margin-bottom: 5px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .sqf-event-item .event-title {
+            font-weight: 600;
+            color: var(--sqf-color);
+        }
+
+        .sqf-event-item .event-details {
+            margin-top: 4px;
+            color: #666;
+        }
+
+        .sqf-event-item .event-time {
+            font-size: 10px;
+            color: #999;
+            margin-top: 2px;
+        }
+
         /* Map Container */
         .map-container {
             flex: 1;
@@ -479,6 +583,42 @@
         #map {
             width: 100%;
             height: 100%;
+        }
+
+        /* Debug Panel */
+        .debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 10px;
+            border-radius: 4px;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 2000;
+            display: none;
+        }
+
+        .debug-panel.visible {
+            display: block;
+        }
+
+        .debug-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            z-index: 1999;
         }
 
         /* Notifications */
@@ -562,11 +702,6 @@
             color: #666;
         }
 
-        .empty-state-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
             .sidebar {
@@ -648,6 +783,37 @@
                             <span>bahnuebergaenge.csv</span>
                             <span class="status" id="statusBahnuebergaenge">ausstehend</span>
                         </div>
+                        <div class="file-item sqf">
+                            <span>SQF_*.csv (Ereignisse)</span>
+                            <span class="status" id="statusSqf">ausstehend</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SQF Ereignisse -->
+            <div class="sidebar-section collapsed" id="sectionSqf">
+                <div class="sidebar-section-header" onclick="toggleSection('sectionSqf')">
+                    <span>SQF Ereignisse</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="sidebar-section-content">
+                    <div class="sqf-control-section">
+                        <div class="sqf-control-header">
+                            <input type="checkbox" id="sqfEnabled" onchange="toggleSqfOverlay()">
+                            <label for="sqfEnabled">SQF Ereignisse aktivieren</label>
+                        </div>
+                        <div class="sqf-info" id="sqfInfo">
+                            Keine SQF-Daten geladen
+                        </div>
+                        <div class="sqf-filter-row" id="sqfFilterRow" style="display: none;">
+                            <select id="sqfArtFilter" onchange="filterSqfEvents()">
+                                <option value="">Alle Arten</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="sqf-events-list" id="sqfEventsList">
+                        <div class="empty-state">Keine SQF-Daten geladen</div>
                     </div>
                 </div>
             </div>
@@ -675,6 +841,10 @@
                         <div class="stat-item">
                             <div class="stat-value" id="statBahnuebergaenge">0</div>
                             <div class="stat-label">Bahnübergänge</div>
+                        </div>
+                        <div class="stat-item sqf">
+                            <div class="stat-value" id="statSqfEvents">0</div>
+                            <div class="stat-label">SQF Ereignisse</div>
                         </div>
                     </div>
                 </div>
@@ -768,6 +938,11 @@
                     <div class="legend-item">
                         <div class="legend-color point" style="background: #c0392b;"></div>
                         <span>Bahnübergänge</span>
+                    </div>
+                    <p style="font-size: 12px; font-weight: 600; margin: 12px 0 8px 0;">SQF Overlay</p>
+                    <div class="legend-item">
+                        <div class="legend-color sqf"></div>
+                        <span>SQF Ereignis (Strecke)</span>
                     </div>
                 </div>
             </div>
@@ -884,6 +1059,10 @@
         </div>
     </div>
 
+    <!-- Debug Panel -->
+    <button class="debug-toggle" onclick="toggleDebugPanel()">Debug</button>
+    <div class="debug-panel" id="debugPanel"></div>
+
     <!-- Loading Overlay -->
     <div class="loading-overlay hidden" id="loadingOverlay">
         <div class="loading-spinner">
@@ -898,6 +1077,57 @@
            ======================================== */
 
         // ========================================
+        // Debug-System
+        // ========================================
+
+        const Debug = {
+            enabled: true,
+            logs: [],
+            maxLogs: 100,
+
+            log(category, message, data = null) {
+                const entry = {
+                    time: new Date().toISOString().substr(11, 12),
+                    category,
+                    message,
+                    data
+                };
+                this.logs.push(entry);
+                if (this.logs.length > this.maxLogs) {
+                    this.logs.shift();
+                }
+                if (this.enabled) {
+                    console.log(`[${entry.time}] [${category}] ${message}`, data || '');
+                }
+                this.updatePanel();
+            },
+
+            warn(category, message, data = null) {
+                this.log(`WARN:${category}`, message, data);
+                console.warn(`[${category}] ${message}`, data || '');
+            },
+
+            error(category, message, data = null) {
+                this.log(`ERROR:${category}`, message, data);
+                console.error(`[${category}] ${message}`, data || '');
+            },
+
+            updatePanel() {
+                const panel = document.getElementById('debugPanel');
+                if (!panel) return;
+                panel.innerHTML = this.logs.slice(-20).map(l =>
+                    `<div>[${l.time}] [${l.category}] ${l.message}</div>`
+                ).join('');
+                panel.scrollTop = panel.scrollHeight;
+            }
+        };
+
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            panel.classList.toggle('visible');
+        }
+
+        // ========================================
         // Konstanten und Konfiguration
         // ========================================
 
@@ -905,7 +1135,7 @@
             STORAGE_KEY_DATA: 'eisenbahn_gis_data',
             STORAGE_KEY_MARKINGS: 'eisenbahn_gis_markings',
             STORAGE_KEY_FILTERS: 'eisenbahn_gis_filters',
-            MAP_CENTER: [51.1657, 10.4515], // Deutschland Zentrum
+            MAP_CENTER: [51.1657, 10.4515],
             MAP_ZOOM: 6,
             REGION_COLORS: {
                 'Nord': '#3498db',
@@ -921,7 +1151,8 @@
                 'betriebsstelle': '#e74c3c',
                 'bruecke': '#f39c12',
                 'bahnuebergang': '#c0392b'
-            }
+            },
+            SQF_COLOR: '#c0392b'
         };
 
         // Region Normalisierung Mapping
@@ -940,37 +1171,68 @@
 
         // Spalten-Aliase für robuste CSV-Verarbeitung
         const COLUMN_ALIASES = {
-            streckennummer: ['streckennummer', 'strecken_nr', 'strecke_nr', 'str_nr', 'strnr', 'strecke'],
+            streckennummer: ['streckennummer', 'strecken_nr', 'strecke_nr', 'str_nr', 'strnr', 'strecke', 'strecke von', 'strecke_von'],
             region: ['region', 'reg', 'regionalbereich'],
             netz: ['netz', 'netzbereich', 'netz_bereich'],
             netzbezirk: ['netzbezirk', 'netz_bezirk', 'bezirk'],
-            km_von: ['km_von', 'km_von_wert', 'von_km', 'anfang_km', 'km_anfang', 'von'],
-            km_bis: ['km_bis', 'km_bis_wert', 'bis_km', 'ende_km', 'km_ende', 'bis'],
+            km_von: ['km_von', 'km_von_wert', 'von_km', 'anfang_km', 'km_anfang', 'von', 'km von'],
+            km_bis: ['km_bis', 'km_bis_wert', 'bis_km', 'ende_km', 'km_ende', 'bis', 'km bis'],
             name: ['name', 'bezeichnung', 'bez', 'beschreibung'],
             wkt: ['wkt', 'geometry', 'geom', 'shape', 'the_geom'],
             lat: ['geogr_breite', 'breite', 'lat', 'latitude', 'y'],
             lon: ['geogr_laenge', 'laenge', 'lon', 'longitude', 'lng', 'x']
         };
 
+        // SQF-spezifische Spalten-Aliase
+        const SQF_COLUMN_ALIASES = {
+            id: ['bbmn id', 'bbmn_id', 'id', 'ereignis_id'],
+            bbr_id: ['bbr id', 'bbr_id'],
+            zeitraum_von: ['von', 'zeitraum_von', 'datum_von', 'start'],
+            zeitraum_bis: ['bis', 'zeitraum_bis', 'datum_bis', 'ende'],
+            strecke_von: ['strecke von', 'strecke_von', 'streckennummer'],
+            km_von: ['km von', 'km_von', 'von_km'],
+            strecke_bis: ['strecke bis', 'strecke_bis'],
+            km_bis: ['km bis', 'km_bis', 'bis_km'],
+            von_ril100: ['von ril100', 'von_ril100', 'ril100_von'],
+            bis_ril100: ['bis ril100', 'bis_ril100', 'ril100_bis'],
+            von_betriebsstelle: ['von betriebsstelle', 'von_betriebsstelle'],
+            bis_betriebsstelle: ['bis betriebsstelle', 'bis_betriebsstelle'],
+            art: ['art', 'ereignisart', 'typ', 'type'],
+            beschreibung: ['beschreibung', 'description', 'text', 'details'],
+            verfuegbarkeit: ['verfügbarkeitseinschränkung', 'verfuegbarkeitseinschraenkung', 'verfuegbarkeit']
+        };
+
+        // SQF-Erkennungsspalten (zur Fallback-Erkennung)
+        const SQF_DETECTION_COLUMNS = ['bbmn id', 'bbr id', 'verfügbarkeitseinschränkung', 'von ril100', 'bis ril100'];
+
         // ========================================
         // Globaler Anwendungszustand
         // ========================================
 
         const AppState = {
-            // Daten
+            // Rohdaten mit Headers
             rawData: {
-                strecken: [],
-                betriebsstellen: [],
-                verortung: [],
-                netzBereiche: [],
-                bereich: [],
-                bruecken: [],
-                bahnuebergaenge: []
+                strecken: { headers: [], rows: [] },
+                betriebsstellen: { headers: [], rows: [] },
+                verortung: { headers: [], rows: [] },
+                netzBereiche: { headers: [], rows: [] },
+                bereich: { headers: [], rows: [] },
+                bruecken: { headers: [], rows: [] },
+                bahnuebergaenge: { headers: [], rows: [] },
+                sqf: { headers: [], rows: [] }
             },
+
+            // GeoJSON
             geoJsonData: {
                 type: 'FeatureCollection',
                 features: []
             },
+
+            // SQF-Daten
+            sqfEvents: [],
+            sqfEnabled: false,
+            sqfArtFilter: '',
+            sqfArten: new Set(),
 
             // Filter
             filters: {
@@ -1006,7 +1268,8 @@
                 bruecken: null,
                 bahnuebergaenge: null,
                 markierungen: null,
-                searchHighlight: null
+                searchHighlight: null,
+                sqfOverlay: null
             },
             layerVisibility: {
                 strecken: true,
@@ -1034,12 +1297,18 @@
 
         /**
          * Findet den passenden Spaltennamen aus Aliase
+         * WICHTIG: Gibt den Original-Header zurück, nicht den Alias
          */
         function findColumn(headers, aliases) {
-            const headersLower = headers.map(h => h.toLowerCase().trim());
+            if (!headers || !Array.isArray(headers)) {
+                Debug.warn('findColumn', 'Headers ist kein Array', headers);
+                return null;
+            }
+            const headersLower = headers.map(h => (h || '').toLowerCase().trim());
             for (const alias of aliases) {
                 const index = headersLower.indexOf(alias.toLowerCase());
                 if (index !== -1) {
+                    Debug.log('findColumn', `Gefunden: ${alias} -> ${headers[index]}`);
                     return headers[index];
                 }
             }
@@ -1047,17 +1316,38 @@
         }
 
         /**
+         * Validiert, dass kritische Spalten existieren
+         */
+        function validateHeaders(headers, requiredAliases, context) {
+            const missing = [];
+            for (const [name, aliases] of Object.entries(requiredAliases)) {
+                if (!findColumn(headers, aliases)) {
+                    missing.push(name);
+                }
+            }
+            if (missing.length > 0) {
+                Debug.warn('validateHeaders', `${context}: Fehlende Spalten: ${missing.join(', ')}`, { headers, missing });
+            }
+            return missing;
+        }
+
+        /**
          * Parst eine CSV-Datei
+         * KORRIGIERT: Gibt headers UND rows zurück, headers bleiben erhalten
          */
         function parseCSV(text) {
+            Debug.log('parseCSV', 'Starte CSV-Parsing');
+
             const lines = text.split(/\r?\n/).filter(line => line.trim());
             if (lines.length === 0) {
+                Debug.warn('parseCSV', 'Leere CSV-Datei');
                 return { headers: [], rows: [] };
             }
 
             const headers = parseCSVLine(lines[0]);
-            const rows = [];
+            Debug.log('parseCSV', `Headers gefunden: ${headers.length}`, headers);
 
+            const rows = [];
             for (let i = 1; i < lines.length; i++) {
                 const values = parseCSVLine(lines[i]);
                 if (values.length > 0) {
@@ -1069,6 +1359,7 @@
                 }
             }
 
+            Debug.log('parseCSV', `Parsing abgeschlossen: ${rows.length} Zeilen`);
             return { headers, rows };
         }
 
@@ -1153,9 +1444,17 @@
             const wktCol = findColumn(headers, COLUMN_ALIASES.wkt);
             if (wktCol && row[wktCol]) {
                 if (isLineString) {
-                    return parseWKTLineString(row[wktCol]);
+                    const coords = parseWKTLineString(row[wktCol]);
+                    if (coords) {
+                        Debug.log('extractCoordinates', 'LineString aus WKT extrahiert');
+                        return coords;
+                    }
                 } else {
-                    return parseWKTPoint(row[wktCol]);
+                    const coords = parseWKTPoint(row[wktCol]);
+                    if (coords) {
+                        Debug.log('extractCoordinates', 'Point aus WKT extrahiert');
+                        return coords;
+                    }
                 }
             }
 
@@ -1164,9 +1463,10 @@
             const lonCol = findColumn(headers, COLUMN_ALIASES.lon);
 
             if (latCol && lonCol && row[latCol] && row[lonCol]) {
-                const lat = parseFloat(row[latCol].replace(',', '.'));
-                const lon = parseFloat(row[lonCol].replace(',', '.'));
+                const lat = parseFloat((row[latCol] + '').replace(',', '.'));
+                const lon = parseFloat((row[lonCol] + '').replace(',', '.'));
                 if (!isNaN(lat) && !isNaN(lon)) {
+                    Debug.log('extractCoordinates', 'Koordinaten aus Lat/Lon extrahiert');
                     return [lon, lat];
                 }
             }
@@ -1176,8 +1476,11 @@
 
         /**
          * Konvertiert Strecken-Daten zu GeoJSON Features
+         * KORRIGIERT: Verwendet die originalen Headers
          */
         function convertStreckenToFeatures(data, headers) {
+            Debug.log('convertStreckenToFeatures', `Verarbeite ${data.length} Strecken mit ${headers.length} Headers`);
+
             const features = [];
             const strNrCol = findColumn(headers, COLUMN_ALIASES.streckennummer);
             const regionCol = findColumn(headers, COLUMN_ALIASES.region);
@@ -1187,27 +1490,39 @@
             const kmBisCol = findColumn(headers, COLUMN_ALIASES.km_bis);
             const nameCol = findColumn(headers, COLUMN_ALIASES.name);
 
+            // Validierung
+            if (!strNrCol) {
+                Debug.warn('convertStreckenToFeatures', 'Keine Streckennummer-Spalte gefunden!', headers);
+            }
+
+            let withGeometry = 0;
+            let withoutGeometry = 0;
+
             for (const row of data) {
                 const coords = extractCoordinates(row, headers, true);
 
-                // Wenn keine LineString-Koordinaten, versuche Point zu erstellen
                 let geometry = null;
                 if (coords) {
                     geometry = {
                         type: 'LineString',
                         coordinates: coords
                     };
+                    withGeometry++;
                 } else {
+                    // Versuche Point als Fallback
                     const pointCoords = extractCoordinates(row, headers, false);
                     if (pointCoords) {
-                        // Erstelle einen "Pseudo-LineString" für einen Punkt
                         geometry = {
                             type: 'LineString',
                             coordinates: [pointCoords, pointCoords]
                         };
+                        withGeometry++;
+                    } else {
+                        withoutGeometry++;
                     }
                 }
 
+                const streckennummer = strNrCol ? (row[strNrCol] || '').toString().trim() : '';
                 const region = normalizeRegion(regionCol ? row[regionCol] : '');
                 const netz = netzCol ? (row[netzCol] || '').trim() : '';
                 const netzbezirk = bezirkCol ? (row[bezirkCol] || '').trim() : '';
@@ -1238,29 +1553,34 @@
                     geometry: geometry,
                     properties: {
                         type: 'strecke',
-                        streckennummer: strNrCol ? (row[strNrCol] || '').trim() : '',
+                        streckennummer: streckennummer,
                         region: region,
                         netz: netz,
                         netzbezirk: netzbezirk,
-                        km_von: kmVonCol ? parseFloat((row[kmVonCol] || '0').replace(',', '.')) : 0,
-                        km_bis: kmBisCol ? parseFloat((row[kmBisCol] || '0').replace(',', '.')) : 0,
+                        km_von: kmVonCol ? parseFloat((row[kmVonCol] || '0').toString().replace(',', '.')) : 0,
+                        km_bis: kmBisCol ? parseFloat((row[kmBisCol] || '0').toString().replace(',', '.')) : 0,
                         name: nameCol ? (row[nameCol] || '').trim() : ''
                     }
                 };
 
-                // Feature nur hinzufügen, wenn es eine Geometrie hat oder zumindest Metadaten
-                if (geometry || feature.properties.streckennummer) {
+                // Feature hinzufügen wenn Geometrie ODER Streckennummer vorhanden
+                if (geometry || streckennummer) {
                     features.push(feature);
                 }
             }
+
+            Debug.log('convertStreckenToFeatures',
+                `Ergebnis: ${features.length} Features, ${withGeometry} mit Geometrie, ${withoutGeometry} ohne`);
 
             return features;
         }
 
         /**
-         * Konvertiert Punkt-Daten (Betriebsstellen, Brücken, BÜ) zu GeoJSON Features
+         * Konvertiert Punkt-Daten zu GeoJSON Features
          */
         function convertPointsToFeatures(data, headers, featureType) {
+            Debug.log('convertPointsToFeatures', `Verarbeite ${data.length} ${featureType} mit ${headers.length} Headers`);
+
             const features = [];
             const strNrCol = findColumn(headers, COLUMN_ALIASES.streckennummer);
             const regionCol = findColumn(headers, COLUMN_ALIASES.region);
@@ -1269,16 +1589,20 @@
             const kmVonCol = findColumn(headers, COLUMN_ALIASES.km_von);
             const nameCol = findColumn(headers, COLUMN_ALIASES.name);
 
+            let withGeometry = 0;
+
             for (const row of data) {
                 const coords = extractCoordinates(row, headers, false);
 
-                let geometry = null;
-                if (coords) {
-                    geometry = {
-                        type: 'Point',
-                        coordinates: coords
-                    };
+                if (!coords) {
+                    continue; // Points benötigen Geometrie
                 }
+
+                withGeometry++;
+                const geometry = {
+                    type: 'Point',
+                    coordinates: coords
+                };
 
                 const region = normalizeRegion(regionCol ? row[regionCol] : '');
 
@@ -1287,22 +1611,20 @@
                     geometry: geometry,
                     properties: {
                         type: featureType,
-                        streckennummer: strNrCol ? (row[strNrCol] || '').trim() : '',
+                        streckennummer: strNrCol ? (row[strNrCol] || '').toString().trim() : '',
                         region: region,
                         netz: netzCol ? (row[netzCol] || '').trim() : '',
                         netzbezirk: bezirkCol ? (row[bezirkCol] || '').trim() : '',
-                        km_von: kmVonCol ? parseFloat((row[kmVonCol] || '0').replace(',', '.')) : 0,
-                        km_bis: kmVonCol ? parseFloat((row[kmVonCol] || '0').replace(',', '.')) : 0,
+                        km_von: kmVonCol ? parseFloat((row[kmVonCol] || '0').toString().replace(',', '.')) : 0,
+                        km_bis: kmVonCol ? parseFloat((row[kmVonCol] || '0').toString().replace(',', '.')) : 0,
                         name: nameCol ? (row[nameCol] || '').trim() : ''
                     }
                 };
 
-                // Feature nur hinzufügen, wenn es eine Geometrie hat
-                if (geometry) {
-                    features.push(feature);
-                }
+                features.push(feature);
             }
 
+            Debug.log('convertPointsToFeatures', `Ergebnis: ${features.length} Features mit Geometrie`);
             return features;
         }
 
@@ -1311,6 +1633,12 @@
          */
         function detectFileType(filename) {
             const lower = filename.toLowerCase();
+
+            // SQF-Erkennung zuerst (Priorität)
+            if (lower.includes('sqf_') || lower.includes('sqf-')) {
+                Debug.log('detectFileType', `SQF erkannt: ${filename}`);
+                return 'sqf';
+            }
 
             if (lower.includes('strecken') && !lower.includes('verortung')) {
                 return 'strecken';
@@ -1338,7 +1666,29 @@
         }
 
         /**
+         * Erkennt SQF-Datei anhand der Spalten (Fallback)
+         */
+        function detectSqfByColumns(headers) {
+            const headersLower = headers.map(h => h.toLowerCase().trim());
+            let matchCount = 0;
+
+            for (const sqfCol of SQF_DETECTION_COLUMNS) {
+                if (headersLower.includes(sqfCol.toLowerCase())) {
+                    matchCount++;
+                }
+            }
+
+            // Wenn mindestens 2 SQF-typische Spalten gefunden
+            if (matchCount >= 2) {
+                Debug.log('detectSqfByColumns', `SQF durch Spalten erkannt: ${matchCount} Matches`);
+                return true;
+            }
+            return false;
+        }
+
+        /**
          * Verarbeitet eine hochgeladene Datei
+         * KORRIGIERT: Headers werden korrekt gespeichert
          */
         async function processFile(file) {
             return new Promise((resolve, reject) => {
@@ -1348,14 +1698,23 @@
                     try {
                         const text = e.target.result;
                         const { headers, rows } = parseCSV(text);
-                        const fileType = detectFileType(file.name);
+
+                        let fileType = detectFileType(file.name);
+
+                        // Fallback: SQF-Erkennung durch Spalten
+                        if (!fileType && detectSqfByColumns(headers)) {
+                            fileType = 'sqf';
+                        }
 
                         if (!fileType) {
+                            Debug.warn('processFile', `Unbekannter Dateityp: ${file.name}`, headers);
                             resolve({ success: false, message: `Unbekannter Dateityp: ${file.name}` });
                             return;
                         }
 
-                        AppState.rawData[fileType] = rows;
+                        // WICHTIG: Headers UND Rows speichern
+                        AppState.rawData[fileType] = { headers, rows };
+                        Debug.log('processFile', `${fileType}: ${rows.length} Zeilen, Headers: ${headers.join(', ')}`);
 
                         // Status aktualisieren
                         const statusMap = {
@@ -1365,7 +1724,8 @@
                             netzBereiche: 'statusNetzBereiche',
                             bereich: 'statusBereich',
                             bruecken: 'statusBruecken',
-                            bahnuebergaenge: 'statusBahnuebergaenge'
+                            bahnuebergaenge: 'statusBahnuebergaenge',
+                            sqf: 'statusSqf'
                         };
 
                         const statusEl = document.getElementById(statusMap[fileType]);
@@ -1381,6 +1741,7 @@
                             rowCount: rows.length
                         });
                     } catch (err) {
+                        Debug.error('processFile', `Fehler bei ${file.name}`, err);
                         reject(err);
                     }
                 };
@@ -1392,8 +1753,11 @@
 
         /**
          * Baut die GeoJSON FeatureCollection aus allen geladenen Daten
+         * KORRIGIERT: Verwendet die gespeicherten Headers
          */
         function buildGeoJSON() {
+            Debug.log('buildGeoJSON', 'Starte GeoJSON-Aufbau');
+
             AppState.geoJsonData.features = [];
 
             // Filter und Hierarchie zurücksetzen
@@ -1404,77 +1768,356 @@
             AppState.hierarchy.netzToNetzbezirke.clear();
             AppState.hierarchy.netzbezirkToRegion.clear();
 
-            // Strecken verarbeiten
-            if (AppState.rawData.strecken.length > 0) {
-                const { headers } = parseCSV(reconstructCSV(AppState.rawData.strecken));
-                const features = convertStreckenToFeatures(
-                    AppState.rawData.strecken,
-                    Object.keys(AppState.rawData.strecken[0] || {})
-                );
+            // Strecken verarbeiten - KORRIGIERT: Verwende gespeicherte Headers
+            const streckenData = AppState.rawData.strecken;
+            if (streckenData.rows.length > 0) {
+                Debug.log('buildGeoJSON', `Verarbeite Strecken: ${streckenData.rows.length} Zeilen`);
+                const features = convertStreckenToFeatures(streckenData.rows, streckenData.headers);
                 AppState.geoJsonData.features.push(...features);
             }
 
-            // Verortung als zusätzliche Strecken-Geometrien
-            if (AppState.rawData.verortung.length > 0) {
-                const features = convertStreckenToFeatures(
-                    AppState.rawData.verortung,
-                    Object.keys(AppState.rawData.verortung[0] || {})
-                );
+            // Verortung
+            const verortungData = AppState.rawData.verortung;
+            if (verortungData.rows.length > 0) {
+                Debug.log('buildGeoJSON', `Verarbeite Verortung: ${verortungData.rows.length} Zeilen`);
+                const features = convertStreckenToFeatures(verortungData.rows, verortungData.headers);
                 AppState.geoJsonData.features.push(...features);
             }
 
             // Betriebsstellen
-            if (AppState.rawData.betriebsstellen.length > 0) {
-                const features = convertPointsToFeatures(
-                    AppState.rawData.betriebsstellen,
-                    Object.keys(AppState.rawData.betriebsstellen[0] || {}),
-                    'betriebsstelle'
-                );
+            const bstData = AppState.rawData.betriebsstellen;
+            if (bstData.rows.length > 0) {
+                Debug.log('buildGeoJSON', `Verarbeite Betriebsstellen: ${bstData.rows.length} Zeilen`);
+                const features = convertPointsToFeatures(bstData.rows, bstData.headers, 'betriebsstelle');
                 AppState.geoJsonData.features.push(...features);
             }
 
             // Brücken
-            if (AppState.rawData.bruecken.length > 0) {
-                const features = convertPointsToFeatures(
-                    AppState.rawData.bruecken,
-                    Object.keys(AppState.rawData.bruecken[0] || {}),
-                    'bruecke'
-                );
+            const brueckenData = AppState.rawData.bruecken;
+            if (brueckenData.rows.length > 0) {
+                Debug.log('buildGeoJSON', `Verarbeite Brücken: ${brueckenData.rows.length} Zeilen`);
+                const features = convertPointsToFeatures(brueckenData.rows, brueckenData.headers, 'bruecke');
                 AppState.geoJsonData.features.push(...features);
             }
 
             // Bahnübergänge
-            if (AppState.rawData.bahnuebergaenge.length > 0) {
-                const features = convertPointsToFeatures(
-                    AppState.rawData.bahnuebergaenge,
-                    Object.keys(AppState.rawData.bahnuebergaenge[0] || {}),
-                    'bahnuebergang'
-                );
+            const bueData = AppState.rawData.bahnuebergaenge;
+            if (bueData.rows.length > 0) {
+                Debug.log('buildGeoJSON', `Verarbeite Bahnübergänge: ${bueData.rows.length} Zeilen`);
+                const features = convertPointsToFeatures(bueData.rows, bueData.headers, 'bahnuebergang');
                 AppState.geoJsonData.features.push(...features);
             }
+
+            // SQF-Ereignisse verarbeiten
+            buildSqfEvents();
 
             // Alle Filter initial aktivieren
             AppState.activeFilters.regions = new Set(AppState.filters.regions);
             AppState.activeFilters.netze = new Set(AppState.filters.netze);
             AppState.activeFilters.netzbezirke = new Set(AppState.filters.netzbezirke);
+
+            Debug.log('buildGeoJSON', `Abgeschlossen: ${AppState.geoJsonData.features.length} Features total`);
         }
 
         /**
-         * Hilfsfunktion zum Rekonstruieren einer CSV (für Header-Extraktion)
+         * Verarbeitet SQF-Ereignisdaten
          */
-        function reconstructCSV(rows) {
-            if (rows.length === 0) return '';
-            const headers = Object.keys(rows[0]);
-            return headers.join(';');
+        function buildSqfEvents() {
+            const sqfData = AppState.rawData.sqf;
+            if (sqfData.rows.length === 0) {
+                Debug.log('buildSqfEvents', 'Keine SQF-Daten');
+                return;
+            }
+
+            Debug.log('buildSqfEvents', `Verarbeite ${sqfData.rows.length} SQF-Ereignisse`);
+
+            const headers = sqfData.headers;
+            AppState.sqfEvents = [];
+            AppState.sqfArten.clear();
+
+            // Spalten finden
+            const idCol = findColumn(headers, SQF_COLUMN_ALIASES.id);
+            const bbrIdCol = findColumn(headers, SQF_COLUMN_ALIASES.bbr_id);
+            const vonCol = findColumn(headers, SQF_COLUMN_ALIASES.zeitraum_von);
+            const bisCol = findColumn(headers, SQF_COLUMN_ALIASES.zeitraum_bis);
+            const streckeVonCol = findColumn(headers, SQF_COLUMN_ALIASES.strecke_von);
+            const kmVonCol = findColumn(headers, SQF_COLUMN_ALIASES.km_von);
+            const streckeBisCol = findColumn(headers, SQF_COLUMN_ALIASES.strecke_bis);
+            const kmBisCol = findColumn(headers, SQF_COLUMN_ALIASES.km_bis);
+            const artCol = findColumn(headers, SQF_COLUMN_ALIASES.art);
+            const beschreibungCol = findColumn(headers, SQF_COLUMN_ALIASES.beschreibung);
+            const vonRil100Col = findColumn(headers, SQF_COLUMN_ALIASES.von_ril100);
+            const bisRil100Col = findColumn(headers, SQF_COLUMN_ALIASES.bis_ril100);
+            const vonBstCol = findColumn(headers, SQF_COLUMN_ALIASES.von_betriebsstelle);
+            const bisBstCol = findColumn(headers, SQF_COLUMN_ALIASES.bis_betriebsstelle);
+
+            Debug.log('buildSqfEvents', `Gefundene Spalten: strecke=${streckeVonCol}, km=${kmVonCol}, art=${artCol}`);
+
+            for (const row of sqfData.rows) {
+                const streckeVon = streckeVonCol ? (row[streckeVonCol] || '').toString().trim() : '';
+                const streckeBis = streckeBisCol ? (row[streckeBisCol] || '').toString().trim() : streckeVon;
+                const kmVon = kmVonCol ? parseFloat((row[kmVonCol] || '0').toString().replace(',', '.')) : 0;
+                const kmBis = kmBisCol ? parseFloat((row[kmBisCol] || '0').toString().replace(',', '.')) : kmVon;
+                const art = artCol ? (row[artCol] || '').trim() : '';
+
+                if (art) {
+                    AppState.sqfArten.add(art);
+                }
+
+                const sqfEvent = {
+                    id: idCol ? (row[idCol] || '').trim() : `sqf_${AppState.sqfEvents.length}`,
+                    bbr_id: bbrIdCol ? (row[bbrIdCol] || '').trim() : '',
+                    zeitraum_von: vonCol ? (row[vonCol] || '').trim() : '',
+                    zeitraum_bis: bisCol ? (row[bisCol] || '').trim() : '',
+                    strecke_von: streckeVon,
+                    strecke_bis: streckeBis,
+                    km_von: kmVon,
+                    km_bis: kmBis,
+                    von_ril100: vonRil100Col ? (row[vonRil100Col] || '').trim() : '',
+                    bis_ril100: bisRil100Col ? (row[bisRil100Col] || '').trim() : '',
+                    von_betriebsstelle: vonBstCol ? (row[vonBstCol] || '').trim() : '',
+                    bis_betriebsstelle: bisBstCol ? (row[bisBstCol] || '').trim() : '',
+                    art: art,
+                    beschreibung: beschreibungCol ? (row[beschreibungCol] || '').trim() : ''
+                };
+
+                AppState.sqfEvents.push(sqfEvent);
+            }
+
+            Debug.log('buildSqfEvents', `${AppState.sqfEvents.length} SQF-Ereignisse verarbeitet, ${AppState.sqfArten.size} Arten`);
+
+            // UI aktualisieren
+            updateSqfUI();
+        }
+
+        // ========================================
+        // SQF Layer - Verknüpfung mit Strecken
+        // ========================================
+
+        /**
+         * Aktualisiert die SQF-UI
+         */
+        function updateSqfUI() {
+            // Info-Text
+            const infoEl = document.getElementById('sqfInfo');
+            if (AppState.sqfEvents.length > 0) {
+                infoEl.textContent = `${AppState.sqfEvents.length} Ereignisse geladen`;
+                document.getElementById('sqfFilterRow').style.display = 'flex';
+            } else {
+                infoEl.textContent = 'Keine SQF-Daten geladen';
+                document.getElementById('sqfFilterRow').style.display = 'none';
+            }
+
+            // Art-Filter befüllen
+            const artSelect = document.getElementById('sqfArtFilter');
+            artSelect.innerHTML = '<option value="">Alle Arten</option>';
+            Array.from(AppState.sqfArten).sort().forEach(art => {
+                const option = document.createElement('option');
+                option.value = art;
+                option.textContent = art;
+                artSelect.appendChild(option);
+            });
+
+            // Statistik
+            document.getElementById('statSqfEvents').textContent = AppState.sqfEvents.length;
+
+            // Ereignisliste
+            updateSqfEventsList();
+        }
+
+        /**
+         * Aktualisiert die SQF-Ereignisliste
+         */
+        function updateSqfEventsList() {
+            const container = document.getElementById('sqfEventsList');
+
+            if (AppState.sqfEvents.length === 0) {
+                container.innerHTML = '<div class="empty-state">Keine SQF-Daten geladen</div>';
+                return;
+            }
+
+            const filteredEvents = AppState.sqfArtFilter
+                ? AppState.sqfEvents.filter(e => e.art === AppState.sqfArtFilter)
+                : AppState.sqfEvents;
+
+            if (filteredEvents.length === 0) {
+                container.innerHTML = '<div class="empty-state">Keine passenden Ereignisse</div>';
+                return;
+            }
+
+            container.innerHTML = filteredEvents.slice(0, 50).map(event => `
+                <div class="sqf-event-item" onclick="zoomToSqfEvent('${event.id}')">
+                    <div class="event-title">${event.art || 'Ereignis'}</div>
+                    <div class="event-details">
+                        Str. ${event.strecke_von} km ${event.km_von.toFixed(1)} - ${event.km_bis.toFixed(1)}
+                        ${event.von_betriebsstelle ? `<br>${event.von_betriebsstelle}` : ''}
+                    </div>
+                    <div class="event-time">${event.zeitraum_von} - ${event.zeitraum_bis}</div>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * Filtert SQF-Ereignisse nach Art
+         */
+        function filterSqfEvents() {
+            AppState.sqfArtFilter = document.getElementById('sqfArtFilter').value;
+            updateSqfEventsList();
+            if (AppState.sqfEnabled) {
+                updateSqfOverlay();
+            }
+        }
+
+        /**
+         * Schaltet SQF-Overlay ein/aus
+         */
+        function toggleSqfOverlay() {
+            AppState.sqfEnabled = document.getElementById('sqfEnabled').checked;
+            Debug.log('toggleSqfOverlay', `SQF Overlay: ${AppState.sqfEnabled}`);
+
+            if (AppState.sqfEnabled) {
+                updateSqfOverlay();
+            } else {
+                clearSqfOverlay();
+            }
+        }
+
+        /**
+         * Leert das SQF-Overlay
+         */
+        function clearSqfOverlay() {
+            if (AppState.layers.sqfOverlay) {
+                AppState.layers.sqfOverlay.clearLayers();
+            }
+        }
+
+        /**
+         * Aktualisiert das SQF-Overlay auf der Karte
+         * SQF-Ereignisse erzeugen KEINE eigenen Linien,
+         * sondern markieren bestehende Streckenabschnitte
+         */
+        function updateSqfOverlay() {
+            if (!AppState.sqfEnabled) return;
+
+            clearSqfOverlay();
+
+            if (!AppState.layers.sqfOverlay) {
+                AppState.layers.sqfOverlay = L.layerGroup().addTo(AppState.map);
+            }
+
+            const filteredEvents = AppState.sqfArtFilter
+                ? AppState.sqfEvents.filter(e => e.art === AppState.sqfArtFilter)
+                : AppState.sqfEvents;
+
+            Debug.log('updateSqfOverlay', `Zeige ${filteredEvents.length} SQF-Ereignisse`);
+
+            let matchedCount = 0;
+
+            for (const event of filteredEvents) {
+                // Finde passende Streckenabschnitte
+                const matchingFeatures = findMatchingStrecken(
+                    event.strecke_von,
+                    event.km_von,
+                    event.km_bis
+                );
+
+                if (matchingFeatures.length > 0) {
+                    matchedCount++;
+
+                    for (const feature of matchingFeatures) {
+                        if (feature.geometry && feature.geometry.type === 'LineString') {
+                            // Overlay-Linie erstellen
+                            const sqfLine = L.geoJSON(feature, {
+                                style: {
+                                    color: CONFIG.SQF_COLOR,
+                                    weight: 8,
+                                    opacity: 0.6,
+                                    dashArray: '10, 5'
+                                }
+                            });
+
+                            sqfLine.bindPopup(createSqfPopup(event));
+                            AppState.layers.sqfOverlay.addLayer(sqfLine);
+                        }
+                    }
+                }
+            }
+
+            Debug.log('updateSqfOverlay', `${matchedCount} Ereignisse mit Strecken verknüpft`);
+        }
+
+        /**
+         * Findet Streckenabschnitte, die zu einem SQF-Ereignis passen
+         */
+        function findMatchingStrecken(streckennummer, kmVon, kmBis) {
+            if (!streckennummer) return [];
+
+            const strNr = streckennummer.toString().trim();
+
+            return AppState.geoJsonData.features.filter(f => {
+                if (f.properties.type !== 'strecke') return false;
+                if (f.properties.streckennummer !== strNr) return false;
+                if (!f.geometry) return false;
+
+                const fKmVon = f.properties.km_von || 0;
+                const fKmBis = f.properties.km_bis || fKmVon;
+
+                // Überlappungsprüfung
+                return !(kmBis < fKmVon || kmVon > fKmBis);
+            });
+        }
+
+        /**
+         * Erstellt Popup für SQF-Ereignis
+         */
+        function createSqfPopup(event) {
+            return `
+                <div style="min-width: 200px;">
+                    <strong style="color: ${CONFIG.SQF_COLOR};">SQF: ${event.art || 'Ereignis'}</strong>
+                    <hr style="margin: 5px 0; border-color: ${CONFIG.SQF_COLOR};">
+                    <small>
+                        <strong>Strecke:</strong> ${event.strecke_von} km ${event.km_von.toFixed(1)} - ${event.km_bis.toFixed(1)}<br>
+                        ${event.von_betriebsstelle ? `<strong>Von:</strong> ${event.von_betriebsstelle} (${event.von_ril100})<br>` : ''}
+                        ${event.bis_betriebsstelle ? `<strong>Bis:</strong> ${event.bis_betriebsstelle} (${event.bis_ril100})<br>` : ''}
+                        <strong>Zeitraum:</strong> ${event.zeitraum_von} - ${event.zeitraum_bis}<br>
+                        ${event.beschreibung ? `<strong>Info:</strong> ${event.beschreibung}` : ''}
+                    </small>
+                </div>
+            `;
+        }
+
+        /**
+         * Zoomt zu einem SQF-Ereignis
+         */
+        function zoomToSqfEvent(eventId) {
+            const event = AppState.sqfEvents.find(e => e.id === eventId);
+            if (!event) return;
+
+            const matchingFeatures = findMatchingStrecken(
+                event.strecke_von,
+                event.km_von,
+                event.km_bis
+            );
+
+            if (matchingFeatures.length > 0) {
+                const geoJson = L.geoJSON({
+                    type: 'FeatureCollection',
+                    features: matchingFeatures
+                });
+
+                const bounds = geoJson.getBounds();
+                if (bounds.isValid()) {
+                    AppState.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+                }
+            } else {
+                showNotification('Streckenabschnitt nicht gefunden', 'warning');
+            }
         }
 
         // ========================================
         // UI Layer - Benutzeroberfläche
         // ========================================
 
-        /**
-         * Toggelt eine Sidebar-Sektion
-         */
         function toggleSection(sectionId) {
             const section = document.getElementById(sectionId);
             if (section) {
@@ -1482,9 +2125,6 @@
             }
         }
 
-        /**
-         * Zeigt eine Benachrichtigung an
-         */
         function showNotification(message, type = 'success') {
             const existing = document.querySelector('.notification');
             if (existing) {
@@ -1501,9 +2141,6 @@
             }, 4000);
         }
 
-        /**
-         * Zeigt/verbirgt den Ladeindikator
-         */
         function showLoading(show, text = 'Lade Daten...') {
             const overlay = document.getElementById('loadingOverlay');
             const textEl = document.getElementById('loadingText');
@@ -1516,9 +2153,6 @@
             }
         }
 
-        /**
-         * Aktualisiert die Statistik-Anzeige
-         */
         function updateStatistics() {
             const features = AppState.geoJsonData.features;
 
@@ -1553,24 +2187,16 @@
             document.getElementById('statBruecken').textContent = counts.bruecken;
             document.getElementById('statBahnuebergaenge').textContent = counts.bahnuebergaenge;
 
-            // Header aktualisieren
-            const total = counts.strecken + counts.betriebsstellen + counts.bruecken + counts.bahnuebergaenge;
             document.getElementById('headerStats').textContent =
-                `${counts.strecken} Strecken | ${counts.betriebsstellen} Bst | ${counts.bruecken} Brücken | ${counts.bahnuebergaenge} BÜ`;
+                `${counts.strecken} Strecken | ${counts.betriebsstellen} Bst | ${counts.bruecken} Brücken | ${counts.bahnuebergaenge} BÜ | ${AppState.sqfEvents.length} SQF`;
         }
 
-        /**
-         * Baut die Filter-Checkboxen auf
-         */
         function buildFilterUI() {
             buildFilterCheckboxes('filterRegion', 'region', AppState.filters.regions, AppState.activeFilters.regions);
             buildFilterCheckboxes('filterNetz', 'netz', AppState.filters.netze, AppState.activeFilters.netze);
             buildFilterCheckboxes('filterNetzbezirk', 'netzbezirk', AppState.filters.netzbezirke, AppState.activeFilters.netzbezirke);
         }
 
-        /**
-         * Erstellt Checkboxen für einen Filter-Typ
-         */
         function buildFilterCheckboxes(containerId, filterType, allValues, activeValues) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
@@ -1608,16 +2234,12 @@
             }
         }
 
-        /**
-         * Prüft, ob ein Filter-Wert basierend auf der Kaskade verfügbar ist
-         */
         function isFilterValueAvailable(filterType, value) {
             if (filterType === 'region') {
-                return true; // Regionen sind immer verfügbar
+                return true;
             }
 
             if (filterType === 'netz') {
-                // Netz ist verfügbar, wenn mindestens eine zugehörige Region aktiv ist
                 for (const [region, netze] of AppState.hierarchy.regionToNetze) {
                     if (AppState.activeFilters.regions.has(region) && netze.has(value)) {
                         return true;
@@ -1627,7 +2249,6 @@
             }
 
             if (filterType === 'netzbezirk') {
-                // Netzbezirk ist verfügbar, wenn das zugehörige Netz aktiv ist
                 for (const [netz, bezirke] of AppState.hierarchy.netzToNetzbezirke) {
                     if (AppState.activeFilters.netze.has(netz) && bezirke.has(value)) {
                         return true;
@@ -1639,9 +2260,6 @@
             return true;
         }
 
-        /**
-         * Behandelt Änderungen an Filter-Checkboxen
-         */
         function handleFilterChange(event) {
             const checkbox = event.target;
             const filterType = checkbox.dataset.filterType;
@@ -1653,25 +2271,22 @@
                 AppState.activeFilters[filterType + 's'].delete(value);
             }
 
-            // Kaskadierende Deaktivierung
             if (filterType === 'region') {
                 updateCascadingFilters();
             } else if (filterType === 'netz') {
                 updateNetzbezirkFilters();
             }
 
-            // Filter-UI aktualisieren
             buildFilterUI();
-
-            // Karte aktualisieren
             updateMapLayers();
+
+            // SQF-Overlay neu berechnen wenn aktiv
+            if (AppState.sqfEnabled) {
+                updateSqfOverlay();
+            }
         }
 
-        /**
-         * Aktualisiert kaskadierende Filter nach Region-Änderung
-         */
         function updateCascadingFilters() {
-            // Deaktiviere Netze, deren Region nicht mehr aktiv ist
             for (const netz of AppState.activeFilters.netze) {
                 let hasActiveRegion = false;
                 for (const [region, netze] of AppState.hierarchy.regionToNetze) {
@@ -1684,14 +2299,9 @@
                     AppState.activeFilters.netze.delete(netz);
                 }
             }
-
-            // Netzbezirke aktualisieren
             updateNetzbezirkFilters();
         }
 
-        /**
-         * Aktualisiert Netzbezirk-Filter nach Netz-Änderung
-         */
         function updateNetzbezirkFilters() {
             for (const bezirk of AppState.activeFilters.netzbezirke) {
                 let hasActiveNetz = false;
@@ -1707,54 +2317,38 @@
             }
         }
 
-        /**
-         * Wählt alle Filter eines Typs aus
-         */
         function selectAllFilter(filterType) {
             const available = [];
-
             AppState.filters[filterType + 's'].forEach(value => {
                 if (isFilterValueAvailable(filterType, value)) {
                     available.push(value);
                 }
             });
-
             available.forEach(value => {
                 AppState.activeFilters[filterType + 's'].add(value);
             });
-
             buildFilterUI();
             updateMapLayers();
         }
 
-        /**
-         * Wählt alle Filter eines Typs ab
-         */
         function deselectAllFilter(filterType) {
             AppState.activeFilters[filterType + 's'].clear();
-
             if (filterType === 'region') {
                 updateCascadingFilters();
             } else if (filterType === 'netz') {
                 updateNetzbezirkFilters();
             }
-
             buildFilterUI();
             updateMapLayers();
         }
 
-        /**
-         * Setzt den Suchmodus
-         */
         function setSearchMode(mode) {
             AppState.searchMode = mode;
 
-            // Button-Status aktualisieren
             document.querySelectorAll('.search-mode-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === mode);
             });
 
-            // Eingabefelder anpassen
             const kmFields = document.getElementById('searchKmFields');
             const kmBisGroup = document.getElementById('searchKmBisGroup');
 
@@ -1769,9 +2363,6 @@
             }
         }
 
-        /**
-         * Führt die Streckensuche aus
-         */
         function executeSearch() {
             const streckennummer = document.getElementById('searchStrecke').value.trim();
 
@@ -1780,7 +2371,6 @@
                 return;
             }
 
-            // Vorherige Suche entfernen
             clearSearchHighlight();
 
             const features = AppState.geoJsonData.features.filter(f =>
@@ -1797,12 +2387,10 @@
             let searchDescription = '';
 
             if (AppState.searchMode === 'strecke') {
-                // Gesamte Strecke
                 resultFeatures = features.filter(f => f.geometry);
                 searchDescription = `Strecke ${streckennummer}`;
 
             } else if (AppState.searchMode === 'punkt') {
-                // Einzelner km-Punkt
                 const kmValue = parseFloat(document.getElementById('searchKmVon').value.replace(',', '.'));
 
                 if (isNaN(kmValue)) {
@@ -1810,7 +2398,6 @@
                     return;
                 }
 
-                // Finde Features, die den km-Wert enthalten
                 resultFeatures = features.filter(f => {
                     if (!f.geometry) return false;
                     const kmVon = f.properties.km_von || 0;
@@ -1818,7 +2405,6 @@
                     return kmValue >= kmVon && kmValue <= kmBis;
                 });
 
-                // Erstelle Punkt-Marker
                 if (resultFeatures.length > 0) {
                     const pointFeature = createPointOnStrecke(resultFeatures[0], kmValue);
                     if (pointFeature) {
@@ -1829,7 +2415,6 @@
                 searchDescription = `Strecke ${streckennummer} bei km ${kmValue}`;
 
             } else if (AppState.searchMode === 'abschnitt') {
-                // km-Abschnitt
                 const kmVon = parseFloat(document.getElementById('searchKmVon').value.replace(',', '.'));
                 const kmBis = parseFloat(document.getElementById('searchKmBis').value.replace(',', '.'));
 
@@ -1838,7 +2423,6 @@
                     return;
                 }
 
-                // Finde überlappende Features
                 resultFeatures = features.filter(f => {
                     if (!f.geometry) return false;
                     const fKmVon = f.properties.km_von || 0;
@@ -1854,7 +2438,6 @@
                 return;
             }
 
-            // Suchergebnis speichern
             AppState.currentSearchResult = {
                 streckennummer,
                 mode: AppState.searchMode,
@@ -1864,18 +2447,11 @@
                 description: searchDescription
             };
 
-            // Auf Karte anzeigen
             highlightSearchResult(resultFeatures);
-
-            // Speichern-Button aktivieren
             document.getElementById('saveMarkingBtn').disabled = false;
-
             showNotification(`${resultFeatures.length} Abschnitt(e) gefunden`);
         }
 
-        /**
-         * Erstellt einen Punkt auf einer Strecke bei gegebenem km-Wert
-         */
         function createPointOnStrecke(streckenFeature, kmValue) {
             if (!streckenFeature.geometry || streckenFeature.geometry.type !== 'LineString') {
                 return null;
@@ -1887,35 +2463,24 @@
             const kmRange = kmBis - kmVon;
 
             if (kmRange === 0) {
-                // Wenn kein Bereich, nimm den ersten Punkt
                 return {
                     type: 'Feature',
-                    geometry: {
-                        type: 'Point',
-                        coordinates: coords[0]
-                    },
+                    geometry: { type: 'Point', coordinates: coords[0] },
                     properties: { ...streckenFeature.properties }
                 };
             }
 
-            // Interpoliere Position
             const ratio = (kmValue - kmVon) / kmRange;
             const index = Math.floor(ratio * (coords.length - 1));
             const coord = coords[Math.min(index, coords.length - 1)];
 
             return {
                 type: 'Feature',
-                geometry: {
-                    type: 'Point',
-                    coordinates: coord
-                },
+                geometry: { type: 'Point', coordinates: coord },
                 properties: { ...streckenFeature.properties, km_punkt: kmValue }
             };
         }
 
-        /**
-         * Hebt Suchergebnisse auf der Karte hervor
-         */
         function highlightSearchResult(features) {
             if (AppState.layers.searchHighlight) {
                 AppState.map.removeLayer(AppState.layers.searchHighlight);
@@ -1943,16 +2508,12 @@
                 }
             }).addTo(AppState.map);
 
-            // Zur Suchergebnis-Position zoomen
             const bounds = AppState.layers.searchHighlight.getBounds();
             if (bounds.isValid()) {
                 AppState.map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
             }
         }
 
-        /**
-         * Entfernt die Suchhervorhebung
-         */
         function clearSearchHighlight() {
             if (AppState.layers.searchHighlight) {
                 AppState.map.removeLayer(AppState.layers.searchHighlight);
@@ -1962,9 +2523,6 @@
             document.getElementById('saveMarkingBtn').disabled = true;
         }
 
-        /**
-         * Speichert die aktuelle Markierung
-         */
         function saveCurrentMarking() {
             if (!AppState.currentSearchResult) {
                 showNotification('Keine aktive Suche zum Speichern', 'warning');
@@ -1985,35 +2543,24 @@
             showNotification('Markierung gespeichert');
         }
 
-        /**
-         * Lädt eine gespeicherte Markierung
-         */
         function loadMarking(markingId) {
             const marking = AppState.savedMarkings.find(m => m.id === markingId);
             if (!marking) return;
 
             clearSearchHighlight();
-
             AppState.currentSearchResult = marking;
             highlightSearchResult(marking.features);
-            document.getElementById('saveMarkingBtn').disabled = true; // Bereits gespeichert
+            document.getElementById('saveMarkingBtn').disabled = true;
         }
 
-        /**
-         * Löscht eine gespeicherte Markierung
-         */
         function deleteMarking(markingId) {
             AppState.savedMarkings = AppState.savedMarkings.filter(m => m.id !== markingId);
             saveMarkingsToStorage();
             updateMarkingsList();
             updateMarkingsLayer();
-
             showNotification('Markierung gelöscht');
         }
 
-        /**
-         * Aktualisiert die Liste der gespeicherten Markierungen
-         */
         function updateMarkingsList() {
             const container = document.getElementById('markingsList');
 
@@ -2034,7 +2581,6 @@
                 </div>
             `).join('');
 
-            // Layer-Count aktualisieren
             document.getElementById('layerCountMarkierungen').textContent = AppState.savedMarkings.length;
         }
 
@@ -2042,61 +2588,49 @@
         // Map Layer - Leaflet Integration
         // ========================================
 
-        /**
-         * Initialisiert die Leaflet-Karte
-         */
         function initMap() {
             AppState.map = L.map('map').setView(CONFIG.MAP_CENTER, CONFIG.MAP_ZOOM);
 
-            // OpenStreetMap Tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                 maxZoom: 19
             }).addTo(AppState.map);
 
-            // Layer-Gruppen erstellen
             AppState.layers.strecken = L.layerGroup().addTo(AppState.map);
             AppState.layers.betriebsstellen = L.layerGroup().addTo(AppState.map);
             AppState.layers.bruecken = L.layerGroup().addTo(AppState.map);
             AppState.layers.bahnuebergaenge = L.layerGroup().addTo(AppState.map);
             AppState.layers.markierungen = L.layerGroup().addTo(AppState.map);
+            AppState.layers.sqfOverlay = L.layerGroup().addTo(AppState.map);
+
+            Debug.log('initMap', 'Karte initialisiert');
         }
 
-        /**
-         * Gibt die Farbe für eine Region zurück
-         */
         function getRegionColor(region) {
             return CONFIG.REGION_COLORS[region] || CONFIG.REGION_COLORS.default;
         }
 
-        /**
-         * Prüft, ob ein Feature den aktuellen Filtern entspricht
-         */
         function featureMatchesFilters(feature) {
             const props = feature.properties;
 
-            // Wenn keine Filter aktiv sind, alles anzeigen
             if (AppState.activeFilters.regions.size === 0 &&
                 AppState.activeFilters.netze.size === 0 &&
                 AppState.activeFilters.netzbezirke.size === 0) {
                 return true;
             }
 
-            // Region-Filter
             if (props.region && AppState.activeFilters.regions.size > 0) {
                 if (!AppState.activeFilters.regions.has(props.region)) {
                     return false;
                 }
             }
 
-            // Netz-Filter
             if (props.netz && AppState.activeFilters.netze.size > 0) {
                 if (!AppState.activeFilters.netze.has(props.netz)) {
                     return false;
                 }
             }
 
-            // Netzbezirk-Filter
             if (props.netzbezirk && AppState.activeFilters.netzbezirke.size > 0) {
                 if (!AppState.activeFilters.netzbezirke.has(props.netzbezirk)) {
                     return false;
@@ -2106,11 +2640,7 @@
             return true;
         }
 
-        /**
-         * Aktualisiert alle Karten-Layer basierend auf Filtern
-         */
         function updateMapLayers() {
-            // Layer leeren
             AppState.layers.strecken.clearLayers();
             AppState.layers.betriebsstellen.clearLayers();
             AppState.layers.bruecken.clearLayers();
@@ -2188,16 +2718,14 @@
                 }
             }
 
-            // Layer-Counts aktualisieren
             document.getElementById('layerCountStrecken').textContent = counts.strecken;
             document.getElementById('layerCountBetriebsstellen').textContent = counts.betriebsstellen;
             document.getElementById('layerCountBruecken').textContent = counts.bruecken;
             document.getElementById('layerCountBahnuebergaenge').textContent = counts.bahnuebergaenge;
+
+            Debug.log('updateMapLayers', `Layer aktualisiert: ${counts.strecken} Strecken, ${counts.betriebsstellen} Bst`);
         }
 
-        /**
-         * Erstellt Popup-Inhalt für Strecken
-         */
         function createStreckePopup(props) {
             return `
                 <div style="min-width: 150px;">
@@ -2214,9 +2742,6 @@
             `;
         }
 
-        /**
-         * Erstellt Popup-Inhalt für Punktobjekte
-         */
         function createPointPopup(props, typeName) {
             return `
                 <div style="min-width: 150px;">
@@ -2232,9 +2757,6 @@
             `;
         }
 
-        /**
-         * Schaltet einen Layer ein/aus
-         */
         function toggleLayer(layerName) {
             const checkbox = document.getElementById('layer' + layerName.charAt(0).toUpperCase() + layerName.slice(1));
             const isVisible = checkbox.checked;
@@ -2262,9 +2784,6 @@
             }
         }
 
-        /**
-         * Aktualisiert den Markierungs-Layer
-         */
         function updateMarkingsLayer() {
             AppState.layers.markierungen.clearLayers();
 
@@ -2303,9 +2822,6 @@
         // Persistenz - localStorage
         // ========================================
 
-        /**
-         * Speichert Markierungen in localStorage
-         */
         function saveMarkingsToStorage() {
             try {
                 localStorage.setItem(
@@ -2313,14 +2829,11 @@
                     JSON.stringify(AppState.savedMarkings)
                 );
             } catch (e) {
-                console.error('Fehler beim Speichern der Markierungen:', e);
+                Debug.error('saveMarkingsToStorage', 'Speichern fehlgeschlagen', e);
                 showNotification('Speichern fehlgeschlagen', 'error');
             }
         }
 
-        /**
-         * Lädt Markierungen aus localStorage
-         */
         function loadMarkingsFromStorage() {
             try {
                 const stored = localStorage.getItem(CONFIG.STORAGE_KEY_MARKINGS);
@@ -2328,9 +2841,10 @@
                     AppState.savedMarkings = JSON.parse(stored);
                     updateMarkingsList();
                     updateMarkingsLayer();
+                    Debug.log('loadMarkingsFromStorage', `${AppState.savedMarkings.length} Markierungen geladen`);
                 }
             } catch (e) {
-                console.error('Fehler beim Laden der Markierungen:', e);
+                Debug.error('loadMarkingsFromStorage', 'Laden fehlgeschlagen', e);
             }
         }
 
@@ -2338,14 +2852,10 @@
         // Event-Handler - Datei-Upload
         // ========================================
 
-        /**
-         * Initialisiert die File-Upload-Funktionalität
-         */
         function initFileUpload() {
             const dropZone = document.getElementById('dropZone');
             const fileInput = document.getElementById('fileInput');
 
-            // Drag & Drop
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 dropZone.classList.add('dragover');
@@ -2368,39 +2878,35 @@
                 }
             });
 
-            // File Input
             fileInput.addEventListener('change', async (e) => {
                 const files = Array.from(e.target.files);
                 if (files.length > 0) {
                     await handleFiles(files);
                 }
-                fileInput.value = ''; // Reset für erneuten Upload
+                fileInput.value = '';
             });
+
+            Debug.log('initFileUpload', 'File-Upload initialisiert');
         }
 
-        /**
-         * Verarbeitet hochgeladene Dateien
-         */
         async function handleFiles(files) {
             showLoading(true, `Verarbeite ${files.length} Datei(en)...`);
 
             try {
                 for (const file of files) {
                     showLoading(true, `Verarbeite ${file.name}...`);
-                    await processFile(file);
+                    const result = await processFile(file);
+                    Debug.log('handleFiles', `${file.name}: ${result.success ? 'OK' : 'FEHLER'}`);
                 }
 
-                // GeoJSON aufbauen
                 showLoading(true, 'Baue Datenstruktur...');
                 buildGeoJSON();
 
-                // UI aktualisieren
                 showLoading(true, 'Aktualisiere Anzeige...');
                 updateStatistics();
                 buildFilterUI();
                 updateMapLayers();
 
-                // Zur Datenausdehnung zoomen
                 zoomToData();
 
                 showLoading(false);
@@ -2409,13 +2915,10 @@
             } catch (error) {
                 showLoading(false);
                 showNotification(`Fehler: ${error.message}`, 'error');
-                console.error('Fehler beim Verarbeiten:', error);
+                Debug.error('handleFiles', 'Verarbeitung fehlgeschlagen', error);
             }
         }
 
-        /**
-         * Zoomt zur Ausdehnung der geladenen Daten
-         */
         function zoomToData() {
             const allBounds = [];
 
@@ -2446,26 +2949,18 @@
         // Initialisierung
         // ========================================
 
-        /**
-         * Initialisiert die Anwendung
-         */
         function init() {
-            // Karte initialisieren
+            Debug.log('init', 'Starte Anwendung...');
+
             initMap();
-
-            // File-Upload initialisieren
             initFileUpload();
-
-            // Gespeicherte Markierungen laden
             loadMarkingsFromStorage();
-
-            // Such-Modus setzen
             setSearchMode('strecke');
 
-            console.log('Eisenbahn Infrastruktur GIS initialisiert');
+            Debug.log('init', 'Eisenbahn Infrastruktur GIS bereit');
+            console.log('Eisenbahn Infrastruktur GIS initialisiert - Debug-Panel mit "Debug"-Button öffnen');
         }
 
-        // Anwendung starten
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
