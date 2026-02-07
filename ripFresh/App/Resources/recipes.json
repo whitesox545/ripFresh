@@ -1,0 +1,136 @@
+[
+  {
+    "id": "3F2C8A4C-2C5B-4BB1-A8BB-1C14F5C72610",
+    "title": "Mediterrane Gemüsepfanne",
+    "summary": "Bunte Paprika, Zucchini und Kichererbsen mit Zitronenöl.",
+    "imageName": "mediterran",
+    "durationMinutes": 25,
+    "servings": 2,
+    "difficulty": "Leicht",
+    "calories": 540,
+    "tags": ["Vegetarisch", "Schnell", "Meal Prep"],
+    "ingredients": [
+      {"id": "A1F9B7A1-1B0C-4E75-A1FA-5C5BAEE9A5E0", "name": "Zucchini", "amount": 1, "unit": "Stk", "category": "Gemüse"},
+      {"id": "E0C0B17A-5C7F-4C5A-9C3B-DB1C77F6E7E1", "name": "Paprika", "amount": 2, "unit": "Stk", "category": "Gemüse"},
+      {"id": "2C0A5D7E-6E86-4E2D-9B8A-3E2B86E0C4F5", "name": "Kichererbsen", "amount": 240, "unit": "g", "category": "Hülsenfrüchte"},
+      {"id": "4D6D5B2E-9EAC-4E4C-8B9B-1C6C0A8C8E92", "name": "Zitrone", "amount": 0.5, "unit": "Stk", "category": "Obst"},
+      {"id": "3D3B6B7D-EE9A-4E5A-9EE4-08BE27BA478D", "name": "Olivenöl", "amount": 2, "unit": "EL", "category": "Basics"}
+    ],
+    "steps": [
+      {"id": "4E5B2D50-9A76-4BC3-9D3A-30A7A2F62E2B", "title": "Gemüse schneiden", "instructions": "Zucchini und Paprika in mundgerechte Stücke schneiden.", "durationMinutes": 5},
+      {"id": "8C1BCA61-8D07-46FD-BB4E-FA4A8D94E2C2", "title": "Anbraten", "instructions": "Gemüse in Olivenöl bei mittlerer Hitze 8 Minuten anbraten.", "durationMinutes": 8},
+      {"id": "4B3F0E87-5DB1-4C07-9F4B-8E6A0E34F5E8", "title": "Verfeinern", "instructions": "Kichererbsen zugeben, mit Zitronensaft und Salz abschmecken.", "durationMinutes": 5}
+    ]
+  },
+  {
+    "id": "A2F0ED4C-77B0-44B2-9C6D-5373C1E0C1B9",
+    "title": "Zartes Lachsfilet mit Kräutern",
+    "summary": "Saftiger Lachs mit Dill, Zitrone und Ofengemüse.",
+    "imageName": "lachs",
+    "durationMinutes": 35,
+    "servings": 2,
+    "difficulty": "Mittel",
+    "calories": 640,
+    "tags": ["Fisch", "Proteinreich", "Ofen"],
+    "ingredients": [
+      {"id": "E3C2B33F-2A38-41D9-9A0D-42199D8D5F93", "name": "Lachsfilet", "amount": 2, "unit": "Stk", "category": "Fisch"},
+      {"id": "A3D69B10-6D35-40C9-81B9-3BFEF1F2B616", "name": "Dill", "amount": 0.5, "unit": "Bund", "category": "Kräuter"},
+      {"id": "FD2E7E2D-7A0E-4F53-BDD0-2E4BCBBAE9A9", "name": "Zitrone", "amount": 1, "unit": "Stk", "category": "Obst"},
+      {"id": "6F2D11A8-96BA-4C6B-9E32-AB8D1B52B0D1", "name": "Karotten", "amount": 3, "unit": "Stk", "category": "Gemüse"},
+      {"id": "E15E8F09-9F4A-4D83-9F87-9E2E9E89E1E4", "name": "Brokkoli", "amount": 1, "unit": "Stk", "category": "Gemüse"}
+    ],
+    "steps": [
+      {"id": "E26DDE26-CCB3-4774-A6E4-7F9B6F2E7B9A", "title": "Vorbereiten", "instructions": "Ofen auf 200°C vorheizen, Gemüse schneiden.", "durationMinutes": 8},
+      {"id": "1B1DD2C0-7F9C-48E9-97F8-3E2C1D1C2F0D", "title": "Backen", "instructions": "Gemüse 20 Minuten backen, Lachs 12 Minuten mitgaren.", "durationMinutes": 20},
+      {"id": "4D92F89F-5D31-4B1C-A23D-45B5F74CF5C4", "title": "Servieren", "instructions": "Mit Dill und Zitrone anrichten.", "durationMinutes": 5}
+    ]
+  },
+  {
+    "id": "66CBEF54-78E5-4B5E-A0A7-1C2E05D5D6E0",
+    "title": "Cremiges Kürbisrisotto",
+    "summary": "Samtiger Hokkaido, Parmesan und Salbei für gemütliche Abende.",
+    "imageName": "risotto",
+    "durationMinutes": 40,
+    "servings": 2,
+    "difficulty": "Mittel",
+    "calories": 710,
+    "tags": ["Vegetarisch", "Comfort", "Herbst"],
+    "ingredients": [
+      {"id": "3D3F06C2-5B3E-49A5-A4CF-DC7E7453C4F0", "name": "Hokkaido", "amount": 400, "unit": "g", "category": "Gemüse"},
+      {"id": "7B2A1E44-32C7-4D95-8A6A-6FEA64F89B56", "name": "Risottoreis", "amount": 180, "unit": "g", "category": "Basics"},
+      {"id": "A2B0C2D1-44B5-4E4E-88CD-1E2C99878A4E", "name": "Parmesan", "amount": 50, "unit": "g", "category": "Milchprodukte"},
+      {"id": "9E6E2F6C-7121-4B01-9161-0E9B22DF91A7", "name": "Gemüsebrühe", "amount": 600, "unit": "ml", "category": "Basics"},
+      {"id": "AE97E590-3B66-4D5C-93F6-2F8C1731A4C7", "name": "Salbei", "amount": 4, "unit": "Blatt", "category": "Kräuter"}
+    ],
+    "steps": [
+      {"id": "F1E73E1C-0559-4C14-90DD-7F4A4D8F9BC9", "title": "Anschwitzen", "instructions": "Kürbiswürfel und Reis in etwas Öl anschwitzen.", "durationMinutes": 6},
+      {"id": "7C7A2D87-9D66-46C3-8447-5C44D3CC3D0D", "title": "Rühren", "instructions": "Brühe nach und nach zugeben und stetig rühren.", "durationMinutes": 20},
+      {"id": "F3DFCC51-02B8-4E90-83C0-3B7B2D76E3E1", "title": "Veredeln", "instructions": "Parmesan und Salbei unterheben.", "durationMinutes": 5}
+    ]
+  },
+  {
+    "id": "4D1A0A0F-2F4C-4B4E-91E7-58A8F1C6C5B2",
+    "title": "Thai Kokos Curry",
+    "summary": "Mildes Curry mit Kokosmilch, Pak Choi und Reis.",
+    "imageName": "curry",
+    "durationMinutes": 30,
+    "servings": 2,
+    "difficulty": "Leicht",
+    "calories": 590,
+    "tags": ["Vegan", "Asia", "Schnell"],
+    "ingredients": [
+      {"id": "B73B16F1-9FE0-4C2C-83B4-3F15BFAE1B7F", "name": "Kokosmilch", "amount": 400, "unit": "ml", "category": "Basics"},
+      {"id": "E2D5B29D-3C1B-4B74-8D51-3524C23FC9B1", "name": "Pak Choi", "amount": 2, "unit": "Stk", "category": "Gemüse"},
+      {"id": "8E7B43B8-91D4-4061-9A5F-7CCB1E3D2D47", "name": "Rote Currypaste", "amount": 1, "unit": "EL", "category": "Basics"},
+      {"id": "9F6F7C2E-0F88-4BFA-9B52-8F7C1B8B0E5B", "name": "Basmatireis", "amount": 150, "unit": "g", "category": "Basics"}
+    ],
+    "steps": [
+      {"id": "0CEB0422-8B2E-4D77-9EA2-76D28D17E32B", "title": "Reis kochen", "instructions": "Reis nach Packungsangabe garen.", "durationMinutes": 12},
+      {"id": "6E0F9F7F-1D11-4F4A-9E3E-6F3C8D3B4E8C", "title": "Curry ansetzen", "instructions": "Currypaste anrösten, Kokosmilch hinzufügen.", "durationMinutes": 5},
+      {"id": "B9F5D70C-8B2B-4E4A-BC2B-1F1E78F1E8D0", "title": "Gemüse garen", "instructions": "Pak Choi zugeben und kurz köcheln lassen.", "durationMinutes": 8}
+    ]
+  },
+  {
+    "id": "8B8BFE39-5B12-4E3B-9A3F-95E0F94E2BA0",
+    "title": "Frischer Quinoasalat",
+    "summary": "Quinoa mit Granatapfel, Feta und Kräutern.",
+    "imageName": "quinoa",
+    "durationMinutes": 20,
+    "servings": 2,
+    "difficulty": "Leicht",
+    "calories": 480,
+    "tags": ["Vegetarisch", "Meal Prep", "Kalt"],
+    "ingredients": [
+      {"id": "C5B64E3C-779A-4D6E-8D67-1A6C6F8F4B5D", "name": "Quinoa", "amount": 120, "unit": "g", "category": "Basics"},
+      {"id": "3B1F76B3-7293-4D0D-80F2-47F5B9E0D6A7", "name": "Granatapfel", "amount": 0.5, "unit": "Stk", "category": "Obst"},
+      {"id": "5B2C7D1B-3B9F-4C71-90E1-3A1D2E0A4B7A", "name": "Feta", "amount": 80, "unit": "g", "category": "Milchprodukte"},
+      {"id": "D9A6C7E1-0F5B-4C5B-9F6E-6C5C7E1D0F5B", "name": "Minze", "amount": 0.5, "unit": "Bund", "category": "Kräuter"}
+    ],
+    "steps": [
+      {"id": "3E6B2D4A-6F7B-4E3C-9A1E-2D4B6F7A8C9D", "title": "Quinoa garen", "instructions": "Quinoa waschen und 15 Minuten köcheln.", "durationMinutes": 15},
+      {"id": "8F7B6C5D-4E3F-2A1B-0C9D-8E7F6A5B4C3D", "title": "Mischen", "instructions": "Granatapfelkerne, Feta und Minze unterheben.", "durationMinutes": 5}
+    ]
+  },
+  {
+    "id": "B7E3C6F4-1D2E-4A5B-9C8D-7E6F5A4B3C2D",
+    "title": "Hähnchen mit Ofengemüse",
+    "summary": "Saftiges Hähnchen mit Rosmarin und buntem Wurzelgemüse.",
+    "imageName": "haehnchen",
+    "durationMinutes": 45,
+    "servings": 3,
+    "difficulty": "Mittel",
+    "calories": 690,
+    "tags": ["Proteinreich", "Ofen", "Familie"],
+    "ingredients": [
+      {"id": "B1C2D3E4-F5A6-47B8-9C0D-1E2F3A4B5C6D", "name": "Hähnchenbrust", "amount": 3, "unit": "Stk", "category": "Fleisch"},
+      {"id": "C2D3E4F5-A6B7-48C9-0D1E-2F3A4B5C6D7E", "name": "Süßkartoffel", "amount": 2, "unit": "Stk", "category": "Gemüse"},
+      {"id": "D3E4F5A6-B7C8-49D0-1E2F-3A4B5C6D7E8F", "name": "Rote Zwiebel", "amount": 1, "unit": "Stk", "category": "Gemüse"},
+      {"id": "E4F5A6B7-C8D9-4A0B-1C2D-3E4F5A6B7C8D", "name": "Rosmarin", "amount": 3, "unit": "Zweig", "category": "Kräuter"}
+    ],
+    "steps": [
+      {"id": "9A8B7C6D-5E4F-3A2B-1C0D-9E8F7A6B5C4D", "title": "Vorbereitung", "instructions": "Gemüse schneiden, Hähnchen würzen.", "durationMinutes": 10},
+      {"id": "8B7C6D5E-4F3A-2B1C-0D9E-8F7A6B5C4D3E", "title": "Backen", "instructions": "Alles auf ein Blech geben und 30 Minuten backen.", "durationMinutes": 30},
+      {"id": "7C6D5E4F-3A2B-1C0D-9E8F-7A6B5C4D3E2F", "title": "Servieren", "instructions": "Mit frischem Rosmarin anrichten.", "durationMinutes": 5}
+    ]
+  }
+]
