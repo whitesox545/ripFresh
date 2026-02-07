@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ripfresh.local/schemas/recipes.schema.json",
+  "title": "RipFresh Recipe Index",
+  "type": "object",
+  "required": ["schemaVersion", "generatedAt", "source", "recipes", "stats"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "required": ["root", "note"],
+      "properties": {
+        "root": {"type": "string"},
+        "note": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "recipes": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/recipe"}
+    },
+    "stats": {
+      "type": "object",
+      "required": ["recipeCount"],
+      "properties": {
+        "recipeCount": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "recipe": {
+      "type": "object",
+      "required": ["id", "slug", "pdf"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "slug": {"type": "string", "minLength": 1},
+        "pdf": {"$ref": "#/$defs/pdf"}
+      },
+      "additionalProperties": false
+    },
+    "pdf": {
+      "type": "object",
+      "required": ["path", "sha256", "byteSize"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "minLength": 64, "maxLength": 64},
+        "byteSize": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
